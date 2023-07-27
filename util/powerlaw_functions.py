@@ -2,7 +2,11 @@ import numpy as np
 
 from util.functions import exponential_function, logarithmic_function, periodic_function, \
     linear_function
+<<<<<<< HEAD
 from util.non_linear_fit import least_squares_fit
+=======
+from util.non_linear_fits import least_squares_fit
+>>>>>>> fad3259d86afbf62f0d8f224691f800f220440e1
 
 
 # pure power-law function
