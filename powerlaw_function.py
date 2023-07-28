@@ -2,6 +2,8 @@ import sys
 import numpy as np
 import pandas as pd
 from typing import Callable
+from functools import partial
+from dataclasses import dataclass
 from matplotlib import pyplot as plt
 from numpy import asarray, isinf, isnan
 from scipy.stats import laplace, norm, t, expon, lognorm, powerlaw, gumbel_l, gumbel_r
@@ -9,15 +11,10 @@ from scipy.stats import laplace, norm, t, expon, lognorm, powerlaw, gumbel_l, gu
 from util.compare_fits import distribution_tests, get_residuals_loglikelihoods
 from util.goodness_of_fit import compute_goodness_of_fit, loglikelihood_ratio
 from util.non_linear_fit import least_squares_fit
-from util.linear_fits import linear_fit_ols, linear_fit_robust_regression, \
-    linear_fit_generalised_regression
-from util.powerlaw_functions import powerlaw_with_log_svf, powerlaw_with_exp_svf, \
-    powerlaw_with_per_svf, powerlaw_with_lin_svf, \
-    pure_powerlaw, find_x_min_index
-from util.parameters import BetaLambdaParam, PeriodicFunctionParam, PowerlawParam, \
-    PowerlawSVFAlphaBetaLambdaParam, PowerlawSVFPeriodicParam
-from util.functions import exponential_function, logarithmic_function, periodic_function, \
-    linear_function
+from util.linear_fits import linear_fit # linear_fit_ols, linear_fit_robust_regression, linear_fit_generalised_regression
+from util.powerlaw_functions import powerlaw_with_log_svf, powerlaw_with_exp_svf, powerlaw_with_per_svf, powerlaw_with_lin_svf, pure_powerlaw, find_x_min_index
+from util.parameters import BetaLambdaParam, PeriodicFunctionParam, PowerlawParam, PowerlawSVFAlphaBetaLambdaParam, PowerlawSVFPeriodicParam
+from util.functions import exponential_function, logarithmic_function, periodic_function, linear_function
 from util.util import block_print, enable_print
 
 
@@ -51,10 +48,15 @@ NAME_TO_FUNC = {
     linear_function.__name__: linear_function
 }
 
+# LINEAR_FITTING_METHODS = {
+#     'OLS': linear_fit_ols,
+#     'Robust regression': linear_fit_robust_regression,
+#     'Generalised regression': linear_fit_generalised_regression,
+# }
 LINEAR_FITTING_METHODS = {
-    'OLS': linear_fit_ols,
-    'Robust regression': linear_fit_robust_regression,
-    'Generalised regression': linear_fit_generalised_regression,
+    'OLS': lambda x, y: linear_fit(x, y, 'OLS'),
+    'Robust regression': lambda x, y: linear_fit(x, y, 'RLM'),
+    'Generalised regression': lambda x, y: linear_fit(x, y, 'GLS'),
 }
 
 POWERLAW_FUNCTIONS = [pure_powerlaw, powerlaw_with_exp_svf, powerlaw_with_log_svf, powerlaw_with_lin_svf,
@@ -397,6 +399,7 @@ class Fit:
 
 
 
+
 if __name__ == '__main__':
 
     from typing import  List
@@ -428,12 +431,12 @@ if __name__ == '__main__':
 
 
     # Results
-    results = Fit(xy_df, verbose=True, xmin=6.0)
-    # R, p = results.function_compare('pure_powerlaw', 'exponential_function')
-    # print('Alpha:', results.pure_powerlaw.params.alpha)
-    # print('xmin:', results.pure_powerlaw.xmin)
-    # print('BIC:', results.pure_powerlaw.bic)
-    # print('Adjusted R-squared:', results.pure_powerlaw.adjusted_rsquared)
-    # print(f'Likelihood Ratio: {R}, p.value: {p}')
+    results = Fit(xy_df, verbose=True, xmin=6)
+    R, p = results.function_compare('pure_powerlaw', 'exponential_function')
+    print('Alpha:', results.pure_powerlaw.params.alpha)
+    print('xmin:', results.pure_powerlaw.xmin)
+    print('BIC:', results.pure_powerlaw.bic)
+    print('Adjusted R-squared:', results.pure_powerlaw.adjusted_rsquared)
+    print(f'Likelihood Ratio: {R}, p.value: {p}')
 
 
