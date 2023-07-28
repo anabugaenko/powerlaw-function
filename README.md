@@ -52,7 +52,7 @@ We would like to extend a thank you to Jeff Alstott, Ed Bullmore, Dietmar Plenz 
   Academics, please cite as:
   
     @article{abuga2023power,
-      title={Power-law functions in deterministic data,
+      title={Power-laws in deterministic functions,
       author={Ana Bugaenko and Christian Wayi-Wayi},
       journal={In preparation},
       year={2023}
