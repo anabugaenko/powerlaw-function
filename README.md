@@ -20,8 +20,8 @@ This tells you everything you need to know for the simplest, typical use cases:
 
     # Data
     xy_df = pd.DataFrame({
-        'x_values': x,
-        'y_values': acf_series
+        'x_values': x_values,
+        'y_values': y_values
     })
     
     results = Fit(xy_df, verbose=True)
