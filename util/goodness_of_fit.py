@@ -53,13 +53,13 @@ def plot_residuals(residuals, **kwargs):
     stats.probplot(residuals, dist="norm", plot=py, **kwargs)
     py.show()
 
-#Much of the rest of this function was inspired by Aaron Clauset powerlaw code, specifically around lines 1748-1822 of
+#Much of this function was inspired by Jeff Alstott and Aaron Clauset powerlaw code, specifically around lines 1748-1822 of
 # this version: https://github.com/jeffalstott/powerlaw/blob/master/powerlaw.py
 def loglikelihood_ratio(loglikelihoods1, loglikelihoods2, nested=False, normalized_ratio=True):
     """
-    This version of the function allows for both the use of normalized or unnormalized R based on the normalized_ratio parameter,
-    and adjusts the calculation of p accordingly. Calculates a loglikelihood ratio and the p-value for testing which of two
-    probability distributions is more likely to have created a set of observations.
+    This version of the function allows for both the use of normalized or unnormalized R based on the normalized_ratio
+    parameter, and adjusts the calculation of p accordingly. Calculates a loglikelihood ratio and the p-value for testing
+    which of two probability distributions is more likely to have created a set of observations.
 
     Parameters
     ----------
@@ -83,16 +83,17 @@ def loglikelihood_ratio(loglikelihoods1, loglikelihoods2, nested=False, normaliz
         the first set of likelihoods is more likely (and so the probability
         distribution that produced them is a better fit to the data). If
         negative, the reverse is true. If normalized_ratio is True, this value
-        is the normalized loglikelihood ratio.
+        is the normalized loglikelihood ratio, otherwise, it's the unnormalized ratio.
     p : float
         The significance of the sign of R. If below a critical value
         (typically .05) the sign of R is taken to be significant. If above the
         critical value the sign of R is taken to be due to statistical
-        fluctuations. If normalized_ratio is True, p is computed using the
-        normalized loglikelihood ratio.
+        fluctuations. p is always computed using the normalized loglikelihood ratio.
     """
-    from numpy import sqrt
+    from numpy import sqrt, asarray, inf, log, mean, sum
     from scipy.special import erfc
+    from scipy.stats import chi2
+    from sys import float_info
 
     n = float(len(loglikelihoods1))
 
@@ -100,32 +101,31 @@ def loglikelihood_ratio(loglikelihoods1, loglikelihoods2, nested=False, normaliz
         R = 0
         p = 1
         return R, p
-    from numpy import asarray
+
     loglikelihoods1 = asarray(loglikelihoods1)
     loglikelihoods2 = asarray(loglikelihoods2)
 
     # Clean for extreme values, if any
-    from numpy import inf, log
-    from sys import float_info
     min_val = log(10**float_info.min_10_exp)
     loglikelihoods1[loglikelihoods1 == -inf] = min_val
     loglikelihoods2[loglikelihoods2 == -inf] = min_val
 
     R = sum(loglikelihoods1 - loglikelihoods2)
 
-    from numpy import mean
     mean_diff = mean(loglikelihoods1) - mean(loglikelihoods2)
     variance = sum((loglikelihoods1 - loglikelihoods2 - mean_diff) ** 2) / n
 
-    # If normalized_ratio is set to True, normalize R before calculating p
-    if normalized_ratio:
-        R = R / sqrt(n * variance)
+    # Normalize R for calculating p
+    R_norm = R / sqrt(n * variance)
 
     if nested:
-        from scipy.stats import chi2
-        p = 1 - chi2.cdf(abs(2 * R), 1)
+        p = 1 - chi2.cdf(abs(2 * R_norm), 1)
     else:
-        p = erfc(abs(R) / sqrt(2))  # R is already normalized if normalized_ratio is True
+        p = erfc(abs(R_norm) / sqrt(2))
+
+
+    # Return normalized R only if normalized_ratio is True
+    if normalized_ratio:
+        R = R_norm
 
     return R, p
-
