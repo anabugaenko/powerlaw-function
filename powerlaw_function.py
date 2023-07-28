@@ -13,11 +13,45 @@ from util.non_linear_fit import least_squares_fit
 from util.xmin import find_x_min_index
 from util.goodness_of_fit import compute_goodness_of_fit, loglikelihood_ratio
 from util.compare_fits import distribution_tests, get_residuals_loglikelihoods
-from util.powerlaw_functions import powerlaw_with_log_svf, powerlaw_with_exp_svf, powerlaw_with_per_svf, powerlaw_with_lin_svf, pure_powerlaw
+from util.powerlaws import powerlaw_with_log_svf, powerlaw_with_exp_svf, powerlaw_with_per_svf, powerlaw_with_lin_svf, pure_powerlaw
 from util.parameters import BetaLambdaParam, PeriodicFunctionParam, PowerlawParam, PowerlawSVFAlphaBetaLambdaParam, PowerlawSVFPeriodicParam
-from util.functions import exponential_function, logarithmic_function, periodic_function, linear_function
+from util.general_functions import exponential_function, logarithmic_function, periodic_function, linear_function
 from util.util import block_print, enable_print
 
+
+NAME_TO_DIST = {
+    'laplace': laplace,
+    'norm': norm,
+    't': t,
+    'expon': expon,
+    'lognorm': lognorm,
+    'powerlaw': powerlaw,
+    'gumbel_l': gumbel_l,
+    'gumbel_r': gumbel_r
+}
+
+LINEAR_FITTING_METHODS = {
+    'OLS': lambda x, y: linear_fit(x, y, 'OLS'),
+    'Robust regression': lambda x, y: linear_fit(x, y, 'RLM'),
+    'Generalised regression': lambda x, y: linear_fit(x, y, 'GLS'),
+}
+
+POWERLAW_FUNCTIONS = {
+    'pure_powerlaw': pure_powerlaw,
+    'powerlaw_with_exp_svf': powerlaw_with_exp_svf,
+    'powerlaw_with_log_svf': powerlaw_with_log_svf,
+    'powerlaw_with_lin_svf': powerlaw_with_lin_svf,
+    'powerlaw_with_per_svf': powerlaw_with_per_svf
+}
+
+NON_POWERLAW_FUNCTIONS = {
+    'exponential_function': exponential_function,
+    'logarithmic_function': logarithmic_function,
+    'periodic_function': periodic_function,
+    'linear_function': linear_function
+}
+
+SUPPORTED_FUNCTIONS = {**POWERLAW_FUNCTIONS, **NON_POWERLAW_FUNCTIONS, **LINEAR_FITTING_METHODS}
 
 FUNC_TO_PARAM = {
     logarithmic_function: BetaLambdaParam,
@@ -31,17 +65,6 @@ FUNC_TO_PARAM = {
     powerlaw_with_per_svf: PowerlawSVFPeriodicParam,
 }
 
-NAME_TO_DIST = {
-    'laplace': laplace,
-    'norm': norm,
-    't': t,
-    'expon': expon,
-    'lognorm': lognorm,
-    'powerlaw': powerlaw,
-    'gumbel_l': gumbel_l,
-    'gumbel_r': gumbel_r
-}
-
 NAME_TO_FUNC = {
     exponential_function.__name__: exponential_function,
     logarithmic_function.__name__: logarithmic_function,
@@ -49,27 +72,15 @@ NAME_TO_FUNC = {
     linear_function.__name__: linear_function
 }
 
-LINEAR_FITTING_METHODS = {
-    'OLS': lambda x, y: linear_fit(x, y, 'OLS'),
-    'Robust regression': lambda x, y: linear_fit(x, y, 'RLM'),
-    'Generalised regression': lambda x, y: linear_fit(x, y, 'GLS'),
-}
-
-POWERLAW_FUNCTIONS = [pure_powerlaw, powerlaw_with_exp_svf, powerlaw_with_log_svf, powerlaw_with_lin_svf,
-                      powerlaw_with_per_svf]
-
-NON_POWERLAW_FUNCTIONS = [exponential_function, logarithmic_function, periodic_function, linear_function]
-
-SUPPORTED_FUNCTIONS = POWERLAW_FUNCTIONS + NON_POWERLAW_FUNCTIONS + list(LINEAR_FITTING_METHODS.values())
-
-
 class FitResult:
-    def __init__(self, residuals, params, fitted_values, function, fitting_method, xmin_index, xmin, data):
+    def __init__(self, function, function_name, fitting_method, residuals, params, fitted_values, xmin_index, xmin,
+                 data):
+        self.function_name = function_name
         self.residuals = residuals
         self.fitted_values = fitted_values
-        self._function = function
+        self.function = function
+        self.fitted_function = function_name
         self.fitting_method = fitting_method
-        self.fitted_function = function.__name__
         self.xmin_index = xmin_index
         self.xmin = xmin
         self.data = data
@@ -83,9 +94,10 @@ class FitResult:
 
     def to_dictionary(self):
         return {
+            'function_name': self.function_name,
             'residuals': self.residuals,
             'params': self.params.__dict__,
-            'function': self._function,
+            'function': self.fitted_function,
             'fitted_values': self.fitted_values,
             'xmin_index': self.xmin_index,
             'xmin': self.xmin,
@@ -96,7 +108,7 @@ class FitResult:
 
     def print_fitted_results(self):
         print("\n")
-        print(f'For {self._function.__name__} fitted using {self.fitting_method}.')
+        print(f'For {self.fitted_function} fitted using {self.fitting_method}.')
         print("\n")
         print('Pre-fitting parameters:')
         print(f'xmin: {self.xmin}')
@@ -115,7 +127,7 @@ class FitResult:
 
     def _plot_data(self, scale='loglog', data_kwargs=None, fit_kwargs=None, figure_kwargs=None):
         # Assigning relevant values
-        func_name = self._function.__name__
+        func_name = self.fitted_function
 
         # Create plot with figure_kwargs
         plt.figure(**(figure_kwargs if figure_kwargs else {}))
@@ -227,25 +239,19 @@ class Fit:
         try:
             print('Using Nonlinear Least-squares fitting method to directly fit power law functions: \n')
 
-            for function in POWERLAW_FUNCTIONS:
+            for function_name, function in POWERLAW_FUNCTIONS.items():
                 xmin_indx = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
                     else find_x_min_index(self.y_values, self.x_values, function)
-                result = self._process_function(function, xmin_indx)
-                self.fit_results_dict[function.__name__] = result
+                result = self._process_function(function, function_name, xmin_indx)
+                self.fit_results_dict[function_name] = result
 
             print('Using Linear fitting methods to fit linear function on Loglog scale: \n')
 
-            # for method_name, fitting_method in LINEAR_FITTING_METHODS.items():
-            #     xmin_indx = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
-            #         else find_x_min_index(self.y_values, self.x_values, pure_powerlaw)
-            #     result = self._process_linear_method(fitting_method, xmin_indx)
-            #     self.fit_results_dict[fitting_method.__name__] = result
             for method_name, fitting_method in LINEAR_FITTING_METHODS.items():
                 xmin_indx = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
                     else find_x_min_index(self.y_values, self.x_values, pure_powerlaw)
                 result = self._process_linear_method(fitting_method, method_name, xmin_indx)
                 self.fit_results_dict[method_name] = result
-
 
         except Exception as e:
             enable_print(original_stdout)
@@ -255,13 +261,13 @@ class Fit:
 
         return self.fit_results_dict
 
-    def _process_function(self, function: Callable, xmin_index: float) -> FitResult:
+    def _process_function(self, function: Callable, function_name: str, xmin_index: float) -> FitResult:
         xmin_x_values = self.x_values[xmin_index:]
         xmin_y_values = self.y_values[xmin_index:]
 
         residuals, params, fitted_values = least_squares_fit(xmin_x_values, xmin_y_values, function)
-        result = FitResult(residuals=residuals, params=params, fitted_values=fitted_values, function=function,
-                           fitting_method=least_squares_fit, xmin_index=xmin_index,
+        result = FitResult(function=function, function_name=function_name, fitting_method='least_squares_fit',
+                           residuals=residuals, params=params, fitted_values=fitted_values, xmin_index=xmin_index,
                            xmin=self.x_values[xmin_index], data=pd.DataFrame({
                 'xmin_x_values': xmin_x_values,
                 'xmin_y_values': xmin_y_values
@@ -280,9 +286,9 @@ class Fit:
         powerlaw_params = [params[1], np.exp(params[0])]  # alpha, const
         powerlaw_fitted_values = pure_powerlaw(xmin_x_values, *powerlaw_params)
         powerlaw_residuals = xmin_y_values - powerlaw_fitted_values
-        result = FitResult(residuals=powerlaw_residuals, params=powerlaw_params, fitted_values=powerlaw_fitted_values,
-                           function=pure_powerlaw, fitting_method=method_name, xmin_index=xmin_index,
-                           xmin=self.x_values[xmin_index], data=pd.DataFrame({
+        result = FitResult(function=pure_powerlaw, function_name='pure_powerlaw', fitting_method=method_name,
+                           residuals=powerlaw_residuals, params=powerlaw_params, fitted_values=powerlaw_fitted_values,
+                           xmin_index=xmin_index, xmin=self.x_values[xmin_index], data=pd.DataFrame({
                 'xmin_x_values': xmin_x_values,
                 'xmin_y_values': xmin_y_values
             }))
@@ -341,14 +347,15 @@ class Fit:
         original_stdout = block_print() if not verbose else None
 
         try:
-
-            if fitting_func1 not in [function.__name__ for function in SUPPORTED_FUNCTIONS]:
-                print(f"{fitting_func1} function is not supported, please choose from {SUPPORTED_FUNCTIONS}")
+            if fitting_func1 not in SUPPORTED_FUNCTIONS.keys():
+                print(
+                    f"{fitting_func1} function is not supported, please choose from {list(SUPPORTED_FUNCTIONS.keys())}")
                 enable_print(original_stdout)
                 return None, None
 
-            if fitting_func2 not in [function.__name__ for function in SUPPORTED_FUNCTIONS]:
-                print(f"{fitting_func2} function is not supported, please choose from {SUPPORTED_FUNCTIONS}")
+            if fitting_func2 not in SUPPORTED_FUNCTIONS.keys():
+                print(
+                    f"{fitting_func2} function is not supported, please choose from {list(SUPPORTED_FUNCTIONS.keys())}")
                 enable_print(original_stdout)
                 return None, None
 
@@ -364,8 +371,13 @@ class Fit:
             if fitting_func2 in NAME_TO_FUNC.keys():
                 print(f'Fitting {fitting_func2}')
                 other_function: Callable = NAME_TO_FUNC.get(fitting_func2, None)
-                result = self._process_function(other_function, xmin_index)
-                self.fit_results_dict[other_function.__name__] = result
+                if fitting_func2 in POWERLAW_FUNCTIONS.keys():
+                    result = self._process_function(other_function, fitting_func2, xmin_index)
+                elif fitting_func2 in LINEAR_FITTING_METHODS.keys():
+                    result = self._process_linear_method(other_function, fitting_func2, xmin_index)
+                else:
+                    result = self._process_function(other_function, fitting_func2, xmin_index)
+                self.fit_results_dict[fitting_func2] = result
 
             # Get the residuals
             power_law_residuals = self.fit_results_dict[fitting_func1].residuals
@@ -387,8 +399,7 @@ class Fit:
             loglikelihoods1, loglikelihoods2 = get_residuals_loglikelihoods(power_law_residuals, fitting_func1,
                                                                             other_residuals, fitting_func2)
 
-
-            # Computer normalised loglikelihood ratio R and p-value
+            # Compute normalised loglikelihood ratio R and p-value
             R, p = loglikelihood_ratio(loglikelihoods1, loglikelihoods2, **kwargs)
 
         except Exception as e:
@@ -442,5 +453,10 @@ if __name__ == '__main__':
     print('BIC:', results.pure_powerlaw.bic)
     print('Adjusted R-squared:', results.pure_powerlaw.adjusted_rsquared)
     print(f'Likelihood Ratio: {R}, p.value: {p}')
+
+    print()
+    print('Function:', results.pure_powerlaw.function)
+    print('fitted_function:', results.pure_powerlaw.fitted_function)
+    print('fitting_method:', results.pure_powerlaw.fitting_method)
 
 

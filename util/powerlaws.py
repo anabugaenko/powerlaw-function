@@ -1,4 +1,4 @@
-from util.functions import exponential_function, logarithmic_function, periodic_function, \
+from util.general_functions import exponential_function, logarithmic_function, periodic_function, \
     linear_function
 
 

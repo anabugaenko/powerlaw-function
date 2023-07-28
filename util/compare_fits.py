@@ -3,7 +3,7 @@ import pandas as pd
 from scipy.optimize import least_squares, curve_fit
 from scipy.stats import laplace, norm, t, expon, lognorm, powerlaw, gumbel_l, gumbel_r, kstest
 from scipy.special import erfc
-from util.powerlaw_functions import powerlaw_with_log_svf, powerlaw_with_exp_svf, \
+from util.powerlaws import powerlaw_with_log_svf, powerlaw_with_exp_svf, \
     powerlaw_with_per_svf
 from util.xmin import find_x_min_index
 from util.goodness_of_fit import compute_goodness_of_fit, compute_loglikelihood
