@@ -6,7 +6,7 @@ The `powerlaw` package is available at [powerlaw](https://github.com/jeffalstott
 However,  here we are instead interested in modelling a response variable as a function of a predictor variable by finding the best functional approximation. In this context, we are fitting power law functions to known functions, which is closer to the realm of approximation theory and deterministic modelling as opposed to probabilistic (or stochastic) modelling approaches. 
 
 
-# Istallation 
+# Installation 
 
 We recommend conda for managing Python packages; pip for everything else. To get started, simply install `pip` and run:
 
