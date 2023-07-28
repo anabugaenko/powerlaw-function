@@ -8,11 +8,12 @@ from matplotlib import pyplot as plt
 from numpy import asarray, isinf, isnan
 from scipy.stats import laplace, norm, t, expon, lognorm, powerlaw, gumbel_l, gumbel_r
 
-from util.compare_fits import distribution_tests, get_residuals_loglikelihoods
-from util.goodness_of_fit import compute_goodness_of_fit, loglikelihood_ratio
+from util.linear_fits import linear_fit
 from util.non_linear_fit import least_squares_fit
-from util.linear_fits import linear_fit # linear_fit_ols, linear_fit_robust_regression, linear_fit_generalised_regression
-from util.powerlaw_functions import powerlaw_with_log_svf, powerlaw_with_exp_svf, powerlaw_with_per_svf, powerlaw_with_lin_svf, pure_powerlaw, find_x_min_index
+from util.xmin import find_x_min_index
+from util.goodness_of_fit import compute_goodness_of_fit, loglikelihood_ratio
+from util.compare_fits import distribution_tests, get_residuals_loglikelihoods
+from util.powerlaw_functions import powerlaw_with_log_svf, powerlaw_with_exp_svf, powerlaw_with_per_svf, powerlaw_with_lin_svf, pure_powerlaw
 from util.parameters import BetaLambdaParam, PeriodicFunctionParam, PowerlawParam, PowerlawSVFAlphaBetaLambdaParam, PowerlawSVFPeriodicParam
 from util.functions import exponential_function, logarithmic_function, periodic_function, linear_function
 from util.util import block_print, enable_print
@@ -48,11 +49,6 @@ NAME_TO_FUNC = {
     linear_function.__name__: linear_function
 }
 
-# LINEAR_FITTING_METHODS = {
-#     'OLS': linear_fit_ols,
-#     'Robust regression': linear_fit_robust_regression,
-#     'Generalised regression': linear_fit_generalised_regression,
-# }
 LINEAR_FITTING_METHODS = {
     'OLS': lambda x, y: linear_fit(x, y, 'OLS'),
     'Robust regression': lambda x, y: linear_fit(x, y, 'RLM'),
@@ -72,9 +68,8 @@ class FitResult:
         self.residuals = residuals
         self.fitted_values = fitted_values
         self._function = function
-        self._fitting_method = fitting_method
+        self.fitting_method = fitting_method
         self.fitted_function = function.__name__
-        self.fitting_method = fitting_method.__name__
         self.xmin_index = xmin_index
         self.xmin = xmin
         self.data = data
@@ -92,7 +87,6 @@ class FitResult:
             'params': self.params.__dict__,
             'function': self._function,
             'fitted_values': self.fitted_values,
-            'fitting_method': self._fitting_method,
             'xmin_index': self.xmin_index,
             'xmin': self.xmin,
             'data': self.data,
@@ -102,7 +96,7 @@ class FitResult:
 
     def print_fitted_results(self):
         print("\n")
-        print(f'For {self._function.__name__} fitted using {self._fitting_method.__name__}.')
+        print(f'For {self._function.__name__} fitted using {self.fitting_method}.')
         print("\n")
         print('Pre-fitting parameters:')
         print(f'xmin: {self.xmin}')
@@ -208,6 +202,12 @@ class Fit:
             self.x_values = np.delete(self.x_values, neg_x_indx+neg_y_indx)
             self.y_values = np.delete(self.y_values, neg_x_indx+neg_y_indx)
 
+        # Check if there are enough data points for the intended fits
+        min_data_points = 20
+        if len(self.x_values) < min_data_points or len(self.y_values) < min_data_points:
+            raise ValueError(f"Insufficient data for fitting. At least {min_data_points} data points are required",
+                             file=sys.stderr)
+
 
         # Fit power-laws
         self._fit_functions()
@@ -235,11 +235,17 @@ class Fit:
 
             print('Using Linear fitting methods to fit linear function on Loglog scale: \n')
 
+            # for method_name, fitting_method in LINEAR_FITTING_METHODS.items():
+            #     xmin_indx = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
+            #         else find_x_min_index(self.y_values, self.x_values, pure_powerlaw)
+            #     result = self._process_linear_method(fitting_method, xmin_indx)
+            #     self.fit_results_dict[fitting_method.__name__] = result
             for method_name, fitting_method in LINEAR_FITTING_METHODS.items():
                 xmin_indx = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
                     else find_x_min_index(self.y_values, self.x_values, pure_powerlaw)
-                result = self._process_linear_method(fitting_method, xmin_indx)
-                self.fit_results_dict[fitting_method.__name__] = result
+                result = self._process_linear_method(fitting_method, method_name, xmin_indx)
+                self.fit_results_dict[method_name] = result
+
 
         except Exception as e:
             enable_print(original_stdout)
@@ -265,7 +271,7 @@ class Fit:
 
         return result
 
-    def _process_linear_method(self, fitting_method: Callable, xmin_index: float) -> FitResult:
+    def _process_linear_method(self, fitting_method: Callable, method_name: str, xmin_index: float) -> FitResult:
         xmin_x_values = self.x_values[xmin_index:]
         xmin_y_values = self.y_values[xmin_index:]
 
@@ -275,7 +281,7 @@ class Fit:
         powerlaw_fitted_values = pure_powerlaw(xmin_x_values, *powerlaw_params)
         powerlaw_residuals = xmin_y_values - powerlaw_fitted_values
         result = FitResult(residuals=powerlaw_residuals, params=powerlaw_params, fitted_values=powerlaw_fitted_values,
-                           function=pure_powerlaw, fitting_method=fitting_method, xmin_index=xmin_index,
+                           function=pure_powerlaw, fitting_method=method_name, xmin_index=xmin_index,
                            xmin=self.x_values[xmin_index], data=pd.DataFrame({
                 'xmin_x_values': xmin_x_values,
                 'xmin_y_values': xmin_y_values
@@ -398,8 +404,6 @@ class Fit:
         return R, p
 
 
-
-
 if __name__ == '__main__':
 
     from typing import  List
@@ -431,7 +435,7 @@ if __name__ == '__main__':
 
 
     # Results
-    results = Fit(xy_df, verbose=True, xmin=6)
+    results = Fit(xy_df, verbose=True)
     R, p = results.function_compare('pure_powerlaw', 'exponential_function')
     print('Alpha:', results.pure_powerlaw.params.alpha)
     print('xmin:', results.pure_powerlaw.xmin)
