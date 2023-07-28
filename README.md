@@ -35,7 +35,7 @@ This tells you everything you need to know for the simplest, typical use cases:
 
 For more details on how to use the Package, including figures and approach, see the Manuscript and Article Bugaenko et al. 2023 respectively, which illustrate all of the `powerlaw-function` features and provide the mathematical background underlying these methods.
 
-# Power Laws vs. Alternative Functions
+# Power Laws vs. Alternative Models
 
 TODO
 
