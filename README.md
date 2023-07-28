@@ -10,7 +10,7 @@ However,  here we are instead interested in modelling a response variable as a f
 
 We recommend conda for managing Python packages; pip for everything else. To get started, simply install `pip` and run:
 
-  pip install powerlaw-function
+  `pip install powerlaw-function`
 
 # Basic Usage 
 
@@ -38,7 +38,6 @@ For more details on how to use the Package, including figures and approach, see 
 # Power Laws vs. Alternative Functions
 
 TODO
-
 
 # Further Development
 
