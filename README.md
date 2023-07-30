@@ -8,7 +8,7 @@ However,  here we are instead interested in modelling a response variable as a f
 
 # Installation 
 
-We recommend conda for managing Python packages; pip for everything else. To get started, simply install `pip` and run:
+We recommend Conda for managing Python packages; pip for everything else. To get started, simply install `pip` and run:
 
   `pip install powerlaw-function`
 
