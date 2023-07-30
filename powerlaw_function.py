@@ -399,7 +399,6 @@ class Fit:
             loglikelihoods1, loglikelihoods2 = get_residuals_loglikelihoods(power_law_residuals, fitting_func1,
                                                                             other_residuals, fitting_func2)
 
-            #from powerlaw import loglikelihood_ratio
             # Compute normalised loglikelihood ratio R and p-value
             R, p = loglikelihood_ratio(loglikelihoods1, loglikelihoods2, **kwargs)
 
@@ -447,7 +446,7 @@ if __name__ == '__main__':
 
     # Results
     results = Fit(xy_df)
-    R, p = results.function_compare('pure_powerlaw', 'exponential_function', normalized_ratio=False, nested=True)
+    R, p = results.function_compare('pure_powerlaw', 'exponential_function', normalized_ratio=True, nested=True)
     print('Alpha:', results.pure_powerlaw.params.alpha)
     print('xmin:', results.pure_powerlaw.xmin)
     print('BIC:', results.pure_powerlaw.bic)

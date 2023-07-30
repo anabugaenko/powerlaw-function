@@ -59,18 +59,18 @@ def loglikelihood_ratio(loglikelihoods1, loglikelihoods2, nested=False, normaliz
     """
     This version of the function allows for both the use of normalized or unnormalized R based on the normalized_ratio
     parameter, and adjusts the calculation of p accordingly. Calculates a loglikelihood ratio and the p-value for testing
-    which of two probability distributions is more likely to have created a set of observations.
+    which of two functions is more likely to have created a set of observations.
 
     Parameters
     ----------
     loglikelihoods1 : list or array
         The logarithms of the likelihoods of each observation, calculated from
-        a particular probability distribution.
+        a particular functions .
     loglikelihoods2 : list or array
         The logarithms of the likelihoods of each observation, calculated from
-        a particular probability distribution.
+        a particular function distribution.
     nested : bool, optional
-        Whether one of the two probability distributions that generated the
+        Whether one of the two functions that generated the
         likelihoods is a nested version of the other. False by default.
     normalized_ratio : bool, optional
         Whether to return the loglikelihood ratio, R, or the normalized
@@ -80,13 +80,13 @@ def loglikelihood_ratio(loglikelihoods1, loglikelihoods2, nested=False, normaliz
     -------
     R : float
         The loglikelihood ratio of the two sets of likelihoods. If positive,
-        the first set of likelihoods is more likely (and so the probability
-        distribution that produced them is a better fit to the data). If
+        the first set of likelihoods is more likely (and so the function
+        that produced them is a better fit to the data). If
         negative, the reverse is true. If normalized_ratio is True, this value
         is the normalized loglikelihood ratio, otherwise, it's the unnormalized ratio.
     p : float
         The significance of the sign of R. If below a critical value
-        (typically .05) the sign of R is taken to be significant. If above the
+        (typically 0.1 or .05 depending on the problem domain) the sign of R is taken to be significant. If above the
         critical value the sign of R is taken to be due to statistical
         fluctuations. p is always computed using the normalized loglikelihood ratio.
     """
@@ -119,10 +119,9 @@ def loglikelihood_ratio(loglikelihoods1, loglikelihoods2, nested=False, normaliz
     R_norm = R / sqrt(n * variance)
 
     if nested:
-        p = 1 - chi2.cdf(abs(2 * R_norm), 1)
+        p = 1 - chi2.cdf(abs(2 * R), 1)
     else:
         p = erfc(abs(R_norm) / sqrt(2))
-
 
     # Return normalized R only if normalized_ratio is True
     if normalized_ratio:
