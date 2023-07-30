@@ -4,7 +4,7 @@ from util.general_functions import exponential_function, logarithmic_function, p
 
 # pure power-law function
 def pure_powerlaw(x, alpha, C):
-    return C * x ** alpha
+    return C * x ** (-alpha)
 
 def powerlaw_with_exp_svf(x, alpha, beta, lambda_):
     return x ** (-alpha) * exponential_function(x, beta, lambda_)
