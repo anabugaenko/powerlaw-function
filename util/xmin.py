@@ -1,5 +1,5 @@
 import numpy as np
-from util.non_linear_fits import least_squares_fit
+from util.non_linear_fit import least_squares_fit
 
 
 def find_x_min_index(y_values, x_values, function):
