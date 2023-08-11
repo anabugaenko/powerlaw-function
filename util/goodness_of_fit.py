@@ -1,16 +1,22 @@
-from matplotlib import pyplot as plt
 import numpy as np
-import scipy.stats as stats
-import pylab as py
+from scipy.stats import norm
 
+
+# def compute_loglikelihood(func, params, x_values, y_values):
+#     residuals = y_values - func(x_values, *params)
+#     std_dev_residuals = np.std(residuals)
+#     loglikelihoods = -0.5 * np.log(2 * np.pi * std_dev_residuals ** 2) - (residuals ** 2) / (2 * std_dev_residuals ** 2)
+#     return loglikelihoods
+def compute_loglikelihood(func, params, x_values, y_values):
+    residuals = y_values - func(x_values, *params)
+    mean_residuals = np.mean(residuals) # loc = mean_residuals
+    std_dev_residuals = np.std(residuals)
+    loglikelihoods = norm.logpdf(residuals, loc=mean_residuals, scale=std_dev_residuals)
+    return loglikelihoods
 
 def compute_bic(log_likelihood, num_params, num_samples):
     return np.log(num_samples) * num_params - 2 * log_likelihood
 
-def compute_loglikelihood(func, params, x_values, y_values):
-    residuals = y_values - func(x_values, *params)
-    loglikelihood = -0.5 * np.log(2 * np.pi * residuals ** 2) - residuals ** 2 / 2
-    return loglikelihood
 
 def compute_goodness_of_fit(residuals, y_values, params):
     ssr = np.sum(residuals ** 2)  # sum of squared residuals
@@ -20,40 +26,14 @@ def compute_goodness_of_fit(residuals, y_values, params):
     p = len(params)  # number of predictors, assuming params is the parameter array from the fit
     adjusted_rsquared = 1 - (1 - rsquared) * (n - 1) / (n - p - 1)
 
-    # log_likelihood = compute_log_likelihood(ssr, n)
-    loglikelihood = -0.5 * np.log(2 * np.pi * residuals ** 2) - residuals ** 2 / 2
-    loglikelihood = np.sum(loglikelihood)  # sum over all data points
+    loglikelihood = -0.5 * np.log(2 * np.pi * np.std(residuals) ** 2) - (residuals ** 2) / (2 * np.std(residuals) ** 2)
+    loglikelihood = np.sum(loglikelihood) # sum over all data points
     bic = compute_bic(loglikelihood, len(params), n)
 
     return adjusted_rsquared, bic
 
-def _plot_distruibutions(data, **kwargs):
-    plt.hist(data, bins=20, density=True, **kwargs)
-    plt.xlabel('Residuals', **kwargs)
-    plt.ylabel('Probability', **kwargs)
-    plt.title('Distribution of residuals', **kwargs)
 
-    # Overlay a normal distribution with the same mean and standard deviation as the residuals
-    mu, std = stats.norm.fit(data)
-    xmin, xmax = plt.xlim()
-    x = np.linspace(xmin, xmax, 100)
-    p = stats.norm.pdf(x, mu, std)
-    plt.plot(x, p, 'k', linewidth=2)
-
-
-def plot_residuals(residuals, **kwargs):
-    plt.figure(figsize=(12, 5), **kwargs)
-
-    plt.subplot(1, 2, 1)
-    # plot distribution vs normal
-    _plot_distruibutions(residuals)
-
-    plt.subplot(1, 2, 2)
-    # Q&Q plot
-    stats.probplot(residuals, dist="norm", plot=py, **kwargs)
-    py.show()
-
-#Much of this function was inspired by Jeff Alstott and Aaron Clauset powerlaw code, specifically around lines 1748-1822 of
+# Much of this function was inspired by Jeff Alstott and Aaron Clauset powerlaw code, specifically around lines 1748-1822 of
 # this version: https://github.com/jeffalstott/powerlaw/blob/master/powerlaw.py
 def loglikelihood_ratio(loglikelihoods1, loglikelihoods2, nested=False, normalized_ratio=True):
     """

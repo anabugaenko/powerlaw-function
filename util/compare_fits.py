@@ -1,14 +1,9 @@
 import numpy as np
+import pylab as py
+from matplotlib import pyplot as plt
+from scipy import stats as stats
 from scipy.stats import laplace, norm, t, expon, lognorm, powerlaw, gumbel_l, gumbel_r, kstest
 from util.goodness_of_fit import compute_goodness_of_fit, compute_loglikelihood
-
-
-def get_ic_for_model(model, y_values, lags, params):
-    fitted_values = model(lags, *params)
-    residuals = y_values - fitted_values
-    adjusted_rsquared, bic = compute_goodness_of_fit(residuals, y_values, params)
-
-    return bic, adjusted_rsquared
 
 
 def distribution_tests(series, function_name, test='all',
@@ -56,9 +51,14 @@ def distribution_tests(series, function_name, test='all',
         print(f"The most likely distribution for {function_name} according to KS-test: {results[0][0]}")
         print("\n")
 
-
     return best_likelihood
 
+# def get_ic_for_model(model, y_values, lags, params):
+#     fitted_values = model(lags, *params)
+#     residuals = y_values - fitted_values
+#     adjusted_rsquared, bic = compute_goodness_of_fit(residuals, y_values, params)
+#
+#     return bic, adjusted_rsquared
 
 def get_residuals_loglikelihoods(first_series, fitting_func1, second_series, fitting_func2):
     x_values = np.arange(1, len(first_series) + 1)
@@ -79,3 +79,28 @@ def get_residuals_loglikelihoods(first_series, fitting_func1, second_series, fit
     return loglikelihoods1, loglikelihoods2
 
 
+def _plot_distruibutions(data, **kwargs):
+    plt.hist(data, bins=20, density=True, **kwargs)
+    plt.xlabel('Residuals', **kwargs)
+    plt.ylabel('Probability', **kwargs)
+    plt.title('Distribution of residuals', **kwargs)
+
+    # Overlay a normal distribution with the same mean and standard deviation as the residuals
+    mu, std = stats.norm.fit(data)
+    xmin, xmax = plt.xlim()
+    x = np.linspace(xmin, xmax, 100)
+    p = stats.norm.pdf(x, mu, std)
+    plt.plot(x, p, 'k', linewidth=2)
+
+
+def plot_residuals(residuals, **kwargs):
+    plt.figure(figsize=(12, 5), **kwargs)
+
+    plt.subplot(1, 2, 1)
+    # plot distribution vs normal
+    _plot_distruibutions(residuals)
+
+    plt.subplot(1, 2, 2)
+    # Q&Q plot
+    stats.probplot(residuals, dist="norm", plot=py, **kwargs)
+    py.show()

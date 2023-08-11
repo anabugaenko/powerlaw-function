@@ -4,45 +4,14 @@ import pandas as pd
 from typing import Callable
 from matplotlib import pyplot as plt
 from numpy import asarray, isinf, isnan
-from scipy.stats import laplace, norm, t, expon, lognorm, powerlaw, gumbel_l, gumbel_r
+from util.constants import NAME_TO_DIST, LINEAR_FITTING_METHODS, SUPPORTED_FUNCTIONS
 
 from util.xmin import find_x_min_index
-from util.linear_fits import linear_fit
 from util import supported_functions as sf
 from util.non_linear_fit import least_squares_fit
 from util.util import block_print, enable_print, FunctionParams
 from util.goodness_of_fit import compute_goodness_of_fit, loglikelihood_ratio
 from util.compare_fits import distribution_tests, get_residuals_loglikelihoods
-
-
-NAME_TO_DIST = {
-    'laplace': laplace,
-    'norm': norm,
-    't': t,
-    'expon': expon,
-    'lognorm': lognorm,
-    'powerlaw': powerlaw,
-    'gumbel_l': gumbel_l,
-    'gumbel_r': gumbel_r
-}
-
-LINEAR_FITTING_METHODS = {
-    'OLS': lambda x, y: linear_fit(x, y, 'OLS'),
-    'Robust regression': lambda x, y: linear_fit(x, y, 'RLM'),
-    'Generalised regression': lambda x, y: linear_fit(x, y, 'GLS'),
-}
-
-
-SUPPORTED_FUNCTIONS = {
-    # Pure Power law
-    sf.pure_powerlaw.__name__: sf.pure_powerlaw,
-
-    # Alternative models
-    sf.powerlaw_with_cutoff.__name__: sf.powerlaw_with_cutoff,
-    sf.exponential_function.__name__: sf.exponential_function,
-    sf.stretched_exponential.__name__: sf.stretched_exponential,
-    sf.lognormal_function.__name__: sf.lognormal_function
-}
 
 
 class FitResult:
@@ -198,7 +167,7 @@ class Fit:
         else:
             # Default behaviour
             print(f'Trying to access {name} on the fit object but {name} does not exist yet.'
-                  f'Consider fitting {name} first.')
+                  f' Consider fitting {name} first.')
             raise AttributeError
 
     def _fit_pure_powerlaw_function(self):
@@ -264,7 +233,7 @@ class Fit:
 
         return result
 
-    def fit_powerlaw_functions(self, functions: dict, verbose=False):
+    def fit_powerlaw_function(self, functions: dict, verbose=False):
         original_stdout = block_print() if not verbose else None
 
         try:
@@ -354,20 +323,20 @@ class Fit:
             other_residuals = self.fit_results_dict[func_name2].residuals
 
             # Evaluate the distribution of the residuals for each series
-
             plr_dist = distribution_tests(power_law_residuals, function_name=func_name1)
             other_dist = distribution_tests(other_residuals, function_name=func_name2)
 
             # Compare residuals fitting
-            plt_dist_fnc = NAME_TO_DIST[plr_dist]
+            plr_dist_fnc = NAME_TO_DIST[plr_dist]
             other_dist_fnc = NAME_TO_DIST[other_dist]
 
-            func_name1 = plt_dist_fnc
+            func_name1 = plr_dist_fnc
             func_name2 = other_dist_fnc
 
             # Compute loglikelihood from residuals
             loglikelihoods1, loglikelihoods2 = get_residuals_loglikelihoods(power_law_residuals, func_name1,
                                                                             other_residuals, func_name2)
+
 
             # Compute normalised loglikelihood ratio R and p-value
             R, p = loglikelihood_ratio(loglikelihoods1, loglikelihoods2, **kwargs)
@@ -387,14 +356,12 @@ class Fit:
 
 if __name__ == '__main__':
 
+    # Load sample data – TSLA stock trade signs.
+    sample = pd.read_csv('datasets/stock_tsla.csv', header=0, index_col=0)
+
+
+    # Generate series from a function, in this example, we generate a series from an autocorrelation function (ACF)
     from typing import List
-
-    # Define bespoke function, in this example,
-
-    # ACF_RANGE = len(sample)+1
-    ACF_RANGE = 1001
-
-    # Autocorrection function (ACF) of data sample
     def acf(series: pd.Series, lags: int) -> List:
         """
         Returns a list of autocorrelation values for each of the lags from 0 to `lags`
@@ -405,19 +372,20 @@ if __name__ == '__main__':
             acl_.append(ac)
         return acl_
 
-    # Load sample data – TSLA stock trade signs.
-    sample = pd.read_csv('datasets/stock_tsla.csv', header=0, index_col=0)
-    acf_series = acf(sample['trade_sign'], ACF_RANGE)[1:]
+    # Autocorrection function (ACF) of sample data
+    ACF_RANGE = len(sample) + 1
+    ACF_RANGE = 1001
     x = list(range(1, ACF_RANGE))
+    acf_series = acf(sample['trade_sign'], ACF_RANGE)[1:]
 
-    # Data
     xy_df = pd.DataFrame({
         'x_values': x,
         'y_values': acf_series
     })
 
+
     # Basic Usage
-    fit = Fit(xy_df)
+    fit = Fit(xy_df, verbose= True)
     fit.pure_powerlaw.print_fitted_results()
 
     # Direct comparison against alternative models
@@ -431,8 +399,7 @@ if __name__ == '__main__':
     # Advanced Usage
 
     # Define custom Power law model:
-
-    # Powerlaw with exponentially slowly varrying function
+    # Powerlaw with exponentially slowly varying function
     def powerlaw_with_exp_svf(x, alpha, beta, lambda_):
         return x ** (-alpha) * sf.exponential_function(x, beta, lambda_)
 
@@ -440,7 +407,7 @@ if __name__ == '__main__':
         'powerlaw_with_exp_svf': powerlaw_with_exp_svf
     }
 
-    fit.fit_powerlaw_functions(custom_powerlaw_funcs)
+    fit.fit_powerlaw_function(custom_powerlaw_funcs)
     fit.powerlaw_with_exp_svf.print_fitted_results()
 
     # Direct comparison against alternative models
@@ -450,6 +417,6 @@ if __name__ == '__main__':
 
     # Plot
     fit.plot_data(scale='linear')
-    fit.powerlaw_with_exp_svf.plot_fit(scale='linear')
+    fit.pure_powerlaw.plot_fit()
 
 
