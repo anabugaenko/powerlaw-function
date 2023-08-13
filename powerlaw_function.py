@@ -10,8 +10,7 @@ from util.xmin import find_x_min_index
 from util import supported_functions as sf
 from util.non_linear_fit import least_squares_fit
 from util.util import block_print, enable_print, FunctionParams
-from util.goodness_of_fit import compute_goodness_of_fit, loglikelihood_ratio
-from util.compare_fits import distribution_tests, get_residuals_loglikelihoods
+from util.goodness_of_fit import compute_goodness_of_fit, loglikelihood_ratio, get_residuals_loglikelihoods
 
 
 class FitResult:
@@ -322,20 +321,9 @@ class Fit:
             power_law_residuals = self.fit_results_dict[func_name1].residuals
             other_residuals = self.fit_results_dict[func_name2].residuals
 
-            # Evaluate the distribution of the residuals for each series
-            plr_dist = distribution_tests(power_law_residuals, function_name=func_name1)
-            other_dist = distribution_tests(other_residuals, function_name=func_name2)
-
-            # Compare residuals fitting
-            plr_dist_fnc = NAME_TO_DIST[plr_dist]
-            other_dist_fnc = NAME_TO_DIST[other_dist]
-
-            func_name1 = plr_dist_fnc
-            func_name2 = other_dist_fnc
 
             # Compute loglikelihood from residuals
-            loglikelihoods1, loglikelihoods2 = get_residuals_loglikelihoods(power_law_residuals, func_name1,
-                                                                            other_residuals, func_name2)
+            loglikelihoods1, loglikelihoods2 = get_residuals_loglikelihoods(power_law_residuals, other_residuals)
 
 
             # Compute normalised loglikelihood ratio R and p-value
@@ -358,7 +346,6 @@ if __name__ == '__main__':
 
     # Load sample data – TSLA stock trade signs.
     sample = pd.read_csv('datasets/stock_tsla.csv', header=0, index_col=0)
-
 
     # Generate series from a function, in this example, we generate a series from an autocorrelation function (ACF)
     from typing import List
@@ -398,8 +385,7 @@ if __name__ == '__main__':
 
     # Advanced Usage
 
-    # Define custom Power law model:
-    # Powerlaw with exponentially slowly varying function
+    # Define custom Power law model: Power law with exponentially slowly varying function
     def powerlaw_with_exp_svf(x, alpha, beta, lambda_):
         return x ** (-alpha) * sf.exponential_function(x, beta, lambda_)
 

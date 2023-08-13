@@ -2,23 +2,10 @@ import numpy as np
 from scipy.stats import norm
 
 
-# def compute_loglikelihood(func, params, x_values, y_values):
-#     residuals = y_values - func(x_values, *params)
-#     std_dev_residuals = np.std(residuals)
-#     loglikelihoods = -0.5 * np.log(2 * np.pi * std_dev_residuals ** 2) - (residuals ** 2) / (2 * std_dev_residuals ** 2)
-#     return loglikelihoods
-def compute_loglikelihood(func, params, x_values, y_values):
-    residuals = y_values - func(x_values, *params)
-    mean_residuals = np.mean(residuals) # loc = mean_residuals
-    std_dev_residuals = np.std(residuals)
-    loglikelihoods = norm.logpdf(residuals, loc=mean_residuals, scale=std_dev_residuals)
-    return loglikelihoods
-
-def compute_bic(log_likelihood, num_params, num_samples):
-    return np.log(num_samples) * num_params - 2 * log_likelihood
-
-
 def compute_goodness_of_fit(residuals, y_values, params):
+    def _compute_bic(log_likelihood, num_params, num_samples):
+        return np.log(num_samples) * num_params - 2 * log_likelihood
+
     ssr = np.sum(residuals ** 2)  # sum of squared residuals
     sst = np.sum((y_values - np.mean(y_values)) ** 2)  # total sum of squares
     rsquared = 1 - ssr / sst
@@ -28,13 +15,42 @@ def compute_goodness_of_fit(residuals, y_values, params):
 
     loglikelihood = -0.5 * np.log(2 * np.pi * np.std(residuals) ** 2) - (residuals ** 2) / (2 * np.std(residuals) ** 2)
     loglikelihood = np.sum(loglikelihood) # sum over all data points
-    bic = compute_bic(loglikelihood, len(params), n)
+    bic = _compute_bic(loglikelihood, len(params), n)
 
     return adjusted_rsquared, bic
 
 
+# def compute_loglikelihood(func, params, x_values, y_values):
+#     residuals = y_values - func(x_values, *params)
+#     std_dev_residuals = np.std(residuals)
+#     loglikelihoods = -0.5 * np.log(2 * np.pi * std_dev_residuals ** 2) - (residuals ** 2) / (2 * std_dev_residuals ** 2)
+#     return loglikelihoods
+def compute_loglikelihood(residuals):
+    # residuals = y_values - func(x_values, *params)
+    mean_residuals = np.mean(residuals) # loc = mean_residuals
+    std_dev_residuals = np.std(residuals)
+    loglikelihoods = norm.logpdf(residuals, loc=mean_residuals, scale=std_dev_residuals)
+    return loglikelihoods
+
+
+def get_residuals_loglikelihoods(first_series, second_series):
+    x_values = np.arange(1, len(first_series) + 1)
+
+    # Trim
+    if len(first_series) != len(second_series):
+        min_len = min(len(first_series), len(second_series))
+        first_series = first_series[-min_len:]
+        second_series = second_series[-min_len:]
+        x_values = x_values[-min_len:]
+
+    loglikelihoods1 = compute_loglikelihood(first_series)
+    loglikelihoods2 = compute_loglikelihood(second_series)
+
+    return loglikelihoods1, loglikelihoods2
+
+
 # Much of this function was inspired by Jeff Alstott and Aaron Clauset powerlaw code, specifically around lines 1748-1822 of
-# this version: https://github.com/jeffalstott/powerlaw/blob/master/powerlaw.py
+# the code at: https://github.com/jeffalstott/powerlaw/blob/master/powerlaw.py
 def loglikelihood_ratio(loglikelihoods1, loglikelihoods2, nested=False, normalized_ratio=True):
     """
     This version of the function allows for both the use of normalized or unnormalized R based on the normalized_ratio
