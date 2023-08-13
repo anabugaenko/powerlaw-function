@@ -151,7 +151,7 @@ class Fit:
             self.x_values = np.delete(self.x_values, neg_x_indx + neg_y_indx)
             self.y_values = np.delete(self.y_values, neg_x_indx + neg_y_indx)
 
-        # Check if there are enough data points for the intended fits
+        # Check if there are enough data points for the intended fit
         min_data_points = 20
         if len(self.x_values) < min_data_points or len(self.y_values) < min_data_points:
             raise ValueError(f"Insufficient data for fitting. At least {min_data_points} data points are required",
