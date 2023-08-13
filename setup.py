@@ -1,9 +1,9 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='powerlaw-function',
-    version='1',
-    packages=[],
+    version='1.0.0',
+    packages=find_packages(),
     url='',
     license='MIT LICENSE',
     author='Ana Bugaenko',

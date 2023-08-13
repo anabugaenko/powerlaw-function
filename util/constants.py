@@ -2,20 +2,10 @@ from scipy.stats import laplace, norm, t, expon, lognorm, powerlaw, gumbel_l, gu
 from util import supported_functions as sf
 from util.linear_fits import linear_fit
 
-NAME_TO_DIST = {
-    'laplace': laplace,
-    'norm': norm,
-    't': t,
-    'expon': expon,
-    'lognorm': lognorm,
-    'powerlaw': powerlaw,
-    'gumbel_l': gumbel_l,
-    'gumbel_r': gumbel_r
-}
 LINEAR_FITTING_METHODS = {
     'OLS': lambda x, y: linear_fit(x, y, 'OLS'),
-    'Robust regression': lambda x, y: linear_fit(x, y, 'RLM'),
-    'Generalised regression': lambda x, y: linear_fit(x, y, 'GLS'),
+    'RobustRegression': lambda x, y: linear_fit(x, y, 'RLM'),
+    'GeneralisedRegression': lambda x, y: linear_fit(x, y, 'GLS'),
 }
 SUPPORTED_FUNCTIONS = {
     # Pure Power law

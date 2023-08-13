@@ -4,7 +4,7 @@ import pandas as pd
 from typing import Callable
 from matplotlib import pyplot as plt
 from numpy import asarray, isinf, isnan
-from util.constants import NAME_TO_DIST, LINEAR_FITTING_METHODS, SUPPORTED_FUNCTIONS
+from util.constants import LINEAR_FITTING_METHODS, SUPPORTED_FUNCTIONS
 
 from util.xmin import find_x_min_index
 from util import supported_functions as sf
@@ -173,14 +173,14 @@ class Fit:
         original_stdout = block_print() if not self.verbose else None
 
         try:
-            print('Fitting Pure Power law function using Nonlinear Least-squares fitting method.')
+            print('Fitting pure_powerlaw function using Nonlinear Least-squares fitting method.')
             function, function_name = sf.pure_powerlaw, sf.pure_powerlaw.__name__
             xmin_indx = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
                 else find_x_min_index(self.y_values, self.x_values, function)
             result = self._process_function(function, function_name, xmin_indx)
             self.fit_results_dict[function_name] = result
 
-            print('Using Linear fitting methods to approximation Pure Power law fit on loglog scale. \n')
+            print('Using Linear fitting methods to approximation pure_powerlaw fit on Loglog scale. \n')
 
             for method_name, fitting_method in LINEAR_FITTING_METHODS.items():
                 xmin_indx = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
@@ -218,10 +218,10 @@ class Fit:
 
         residuals, params, fitted_values = fitting_method(xmin_x_values, xmin_y_values)
 
-        powerlaw_params = [np.exp(params[0]), -params[1]] # - for alpha on linear scale, const
+        powerlaw_params = [np.exp(params[0]), -params[1]] # negative sign for alpha on linear scale, const
         powerlaw_fitted_values = sf.pure_powerlaw(xmin_x_values, *powerlaw_params)
         powerlaw_residuals = xmin_y_values - powerlaw_fitted_values
-        result = FitResult(function= sf.pure_powerlaw, function_name='Pure Power law', fitting_method=method_name,
+        result = FitResult(function= sf.pure_powerlaw, function_name='pure_powerlaw', fitting_method=method_name,
                            residuals=powerlaw_residuals, params=powerlaw_params, fitted_values=powerlaw_fitted_values,
                            xmin_index=xmin_index, xmin=self.x_values[xmin_index], data=pd.DataFrame({
                 'xmin_x_values': xmin_x_values,
@@ -237,7 +237,7 @@ class Fit:
 
         try:
 
-            print('Using Nonlinear Least-squares fitting method to directly fit Power law functions. \n')
+            print(f'Using Nonlinear Least-squares fitting method to directly fit {functions.keys()}. \n')
 
             for function_name, function in functions.items():
                 xmin_indx = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
@@ -345,7 +345,7 @@ class Fit:
 if __name__ == '__main__':
 
     # Load sample data – TSLA stock trade signs.
-    sample = pd.read_csv('datasets/stock_tsla.csv', header=0, index_col=0)
+    sample = pd.read_csv('../datasets/stock_tsla.csv', header=0, index_col=0)
 
     # Generate series from a function, in this example, we generate a series from an autocorrelation function (ACF)
     from typing import List
@@ -397,7 +397,7 @@ if __name__ == '__main__':
     fit.powerlaw_with_exp_svf.print_fitted_results()
 
     # Direct comparison against alternative models
-    print('powerlaw_with_exp_svf vs. exponential_function')
+    print('powerlaw_with_exp_svf vs. exponential_function:')
     R, p = fit.function_compare('powerlaw_with_exp_svf', 'exponential_function', nested = True)
     print(f'Normalized Likelihood Ratio: {R}, p.value: {p}')
 

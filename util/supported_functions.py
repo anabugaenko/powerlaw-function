@@ -2,14 +2,14 @@ import numpy as np
 
 # Pure power-law function
 def pure_powerlaw(x, C, alpha):
-    return C * x ** (-alpha)
+    return C * x ** -(alpha)
 
 
 # Alternative heavy-tailed functions
 
 # Powerlaw with cut-off
 def powerlaw_with_cutoff(x, alpha, lambda_, C):
-    return C * x ** (-alpha) * np.exp(-lambda_ * x)
+    return C * x ** -(alpha) * np.exp(-lambda_ * x)
 
 # Exponential
 def exponential_function(x, beta, lambda_):

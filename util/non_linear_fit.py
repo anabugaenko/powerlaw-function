@@ -11,10 +11,15 @@ def least_squares_fit(x_values, y_values, function):
         model_values = function(x_values, *params)
         return y_values - model_values
 
+    # Set bounds according to the number of parameters
+    lower_bounds = [0] + [-np.inf] * (num_params - 1)
+    upper_bounds = [np.inf] * num_params
+    bounds = (lower_bounds, upper_bounds)
+
     try:
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
-            result = least_squares(_residuals_log, initial_guess, args=(x_values, y_values), loss='soft_l1')
+            result = least_squares(_residuals_log, initial_guess, args=(x_values, y_values), bounds=bounds)
             params = result.x
 
         fitted_values = function(x_values, *params)
