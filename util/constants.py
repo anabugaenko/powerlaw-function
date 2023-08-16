@@ -7,6 +7,7 @@ LINEAR_FITTING_METHODS = {
     'RobustRegression': lambda x, y: linear_fit(x, y, 'RLM'),
     'GeneralisedRegression': lambda x, y: linear_fit(x, y, 'GLS'),
 }
+
 SUPPORTED_FUNCTIONS = {
     # Pure Power law
     sf.pure_powerlaw.__name__: sf.pure_powerlaw,

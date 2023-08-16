@@ -33,7 +33,7 @@ def compute_loglikelihood(residuals):
     return loglikelihoods
 
 
-def get_residuals_loglikelihoods(first_series, second_series):
+def get_residual_loglikelihoods(first_series, second_series):
     x_values = np.arange(1, len(first_series) + 1)
 
     # Trim
