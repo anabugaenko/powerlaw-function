@@ -53,7 +53,7 @@ For more details on how to use the Package, including figures and approach, see 
 
 # Power Laws vs. Alternative Models
 
-TODO
+TODO: Describe process
 
     # Direct comparison against alternative models
     print('powerlaw_with_exp_svf vs. exponential_function:')
@@ -65,7 +65,6 @@ TODO
     fit.exponential_function.plot_fit()
     fit.pure_powerlaw.plot_fit()
     fit.powerlaw_with_exp_svf.plot_fit()
-
 
 # Further Development
 
