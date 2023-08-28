@@ -3,9 +3,11 @@ from util import supported_functions as sf
 from util.linear_fits import linear_fit
 
 LINEAR_FITTING_METHODS = {
+    # Mapping from name to linear fitting methods
     'OLS': lambda x, y: linear_fit(x, y, 'OLS'),
-    'RobustRegression': lambda x, y: linear_fit(x, y, 'RLM'),
     'GeneralisedRegression': lambda x, y: linear_fit(x, y, 'GLS'),
+    'RobustRegression': lambda x, y: linear_fit(x, y, 'RLM'),
+
 }
 
 SUPPORTED_FUNCTIONS = {

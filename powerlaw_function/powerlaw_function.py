@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import pandas as pd
 from typing import Callable
@@ -5,12 +6,13 @@ from matplotlib import pyplot as plt
 from numpy import asarray, isinf, isnan
 from util.constants import LINEAR_FITTING_METHODS, SUPPORTED_FUNCTIONS
 
-from util.xmin import find_x_min_index
+from util.xmin import find_x_min
 from util import supported_functions as sf
 from util.non_linear_fit import least_squares_fit
 from util.util import block_print, enable_print
 from util.supported_functions import FunctionParams
 from util.goodness_of_fit import compute_goodness_of_fit, loglikelihood_ratio, get_residual_loglikelihoods
+import powerlaw
 
 
 class FitResult:
@@ -27,8 +29,9 @@ class FitResult:
         xmin (float): Minimum x value.
         data (DataFrame): Data used for fitting.
         params (FunctionParams): Parameters of the function.
+        D (float): KS-distance value.
+        bic (float): Bayesian Information Criterion for the model.
         adjusted_rsquared (float): Adjusted R squared value.
-        bic (float): BIC value.
     """
     def __init__(self, function, function_name, fitting_method, residuals, params, fitted_values, xmin_index, xmin,
                  data):
@@ -42,8 +45,8 @@ class FitResult:
         self.xmin = xmin
         self.data = data
         self.params = FunctionParams(function, params)
-        self.adjusted_rsquared, self.bic = compute_goodness_of_fit(self.residuals, self.data.xmin_y_values,
-                                                                   self.params.__dict__)
+        self.D, self.bic, self.adjusted_rsquared = compute_goodness_of_fit(residuals=self.residuals, y_values=self.data.xmin_y_values,
+                                                                  params=self.params.__dict__, model_predictions=self.fitted_values)
 
     def to_dictionary(self):
         """
@@ -61,7 +64,9 @@ class FitResult:
             'xmin_index': self.xmin_index,
             'xmin': self.xmin,
             'data': self.data,
+            'D': self.D,
             'bic': self.bic,
+
             'adjusted_rsquared': self.adjusted_rsquared,
         }
 
@@ -80,7 +85,8 @@ class FitResult:
 
         print('')
         print('Goodness of fit to data:')
-        print('BIC =', self.bic)
+        print('D =', self.D)
+        print('bic =', self.bic)
         print('Adjusted R-squared =', self.adjusted_rsquared)
         print('\n')
 
@@ -95,10 +101,9 @@ class FitResult:
             scale (str): Scale for the plot. Can be 'loglog' or 'linear'.
         """
 
-        # Assigning relevant values
         func_name = self.fitted_function
 
-        # Create plot with figure_kwargs
+
         plt.figure(**(figure_kwargs if figure_kwargs else {}))
 
         # Plot raw data according to the specified scale
@@ -155,7 +160,7 @@ class Fit:
         # Check for 0
         if 0 in self.x_values or 0 in self.y_values:
             if verbose:
-                print("Values less than or equal to 0 in data. Throwing away these values.", file=sys.stderr)
+                print("Values equal to 0 in data. Throwing away these values.", file=sys.stderr)
 
             zero_x_indx = 0 in self.x_values
             zero_y_indx = 0 in self.y_values
@@ -182,15 +187,6 @@ class Fit:
             self.x_values = np.delete(self.x_values, nan_x_indx + nan_y_indx)
             self.y_values = np.delete(self.y_values, nan_x_indx + nan_y_indx)
 
-        # Check for negative values
-        if any(self.x_values < 0) or any(self.y_values < 0):
-            if verbose:
-                print("Negative values in data. Throwing away these values.", file=sys.stderr)
-
-            neg_x_indx = self.x_values < 0
-            neg_y_indx = self.y_values < 0
-            self.x_values = np.delete(self.x_values, neg_x_indx + neg_y_indx)
-            self.y_values = np.delete(self.y_values, neg_x_indx + neg_y_indx)
 
         # Check if there are enough data points for the intended fits
         min_data_points = 20
@@ -230,17 +226,16 @@ class Fit:
         try:
             print('Fitting pure_powerlaw function using Nonlinear Least-squares fitting method.')
             function, function_name = sf.pure_powerlaw, sf.pure_powerlaw.__name__
-            xmin_indx = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
-                else find_x_min_index(self.y_values, self.x_values, function)
-            result = self._process_powerlaw_function(function, function_name, xmin_indx)
+            xmin_index = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
+                else find_x_min(self.y_values, self.x_values, function)
+            result = self._process_powerlaw_function(function, function_name, xmin_index)
             self.fit_results_dict[function_name] = result
 
             print('Using Linear fitting methods to approximation pure_powerlaw fit on Loglog scale.')
-
             for method_name, fitting_method in LINEAR_FITTING_METHODS.items():
-                xmin_indx = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
-                    else find_x_min_index(self.y_values, self.x_values, function)
-                result = self._process_linear_method(fitting_method, method_name, xmin_indx)
+                xmin_index = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
+                    else find_x_min(self.y_values, self.x_values, function)
+                result = self._process_linear_method(fitting_method, method_name, xmin_index)
                 self.fit_results_dict[method_name] = result
 
         except Exception as e:
@@ -290,12 +285,23 @@ class Fit:
         Returns:
             FitResult: Results of the fitting procedure.
         """
-        xmin_x_values = self.x_values[xmin_index:]
-        xmin_y_values = self.y_values[xmin_index:]
+        x_values = self.x_values
+        y_values = self.y_values
+
+        # Check for negative values for fit in logspace
+        if any(self.x_values < 0) or any(self.y_values < 0):
+
+            neg_x_indx = x_values < 0
+            neg_y_indx = y_values < 0
+            x_values = np.delete(x_values, neg_x_indx + neg_y_indx)
+            y_values = np.delete(y_values, neg_x_indx + neg_y_indx)
+
+        xmin_x_values = x_values[xmin_index:]
+        xmin_y_values = y_values[xmin_index:]
 
         residuals, params, fitted_values = fitting_method(xmin_x_values, xmin_y_values)
 
-        powerlaw_params = [np.exp(params[0]), -params[1]] # negative sign for alpha on linear scale, const
+        powerlaw_params = [np.exp(params[0]), params[1]] # negative sign for alpha on linear scale, const
         powerlaw_fitted_values = sf.pure_powerlaw(xmin_x_values, *powerlaw_params)
         powerlaw_residuals = xmin_y_values - powerlaw_fitted_values
         result = FitResult(function= sf.pure_powerlaw, function_name='pure_powerlaw', fitting_method=method_name,
@@ -332,7 +338,7 @@ class Fit:
             for function_name, function in functions.items():
                 print(f'Using Nonlinear Least-squares fitting method to directly fit {function_name}.')
                 xmin_indx = np.where(self.x_values == xmin)[0][0] if xmin is not None \
-                    else find_x_min_index(self.y_values, self.x_values, function)
+                    else find_x_min(self.y_values, self.x_values, function)
                 result = self._process_powerlaw_function(function, function_name, xmin_indx)
                 self.fit_results_dict[function_name] = result
 
@@ -404,7 +410,7 @@ class Fit:
         Returns a summary of all the fitting results stored in the fit_results_dict.
 
         This method compiles relevant fitting metrics such as the fitted function,
-        xmin_index, xmin, fitting parameters, adjusted R-squared, and BIC for each
+        xmin_index, xmin, fitting parameters, KS-distance D, BIC and adjusted R-squared for each
         function in the fit_results_dict.
 
         Returns:
@@ -417,8 +423,10 @@ class Fit:
             xmin_index = result_dict['xmin_index']
             xmin = result_dict['xmin']
             params = result_dict['params']
-            adjusted_rsquared = result_dict['adjusted_rsquared']
+            D = result_dict['D']
             bic = result_dict['bic']
+            adjusted_rsquared = result_dict['adjusted_rsquared']
+
 
             summary_dict = {
                 'name': func_name,
@@ -426,8 +434,9 @@ class Fit:
                 'xmin_index': xmin_index,
                 'xmin': xmin,
                 'fitting param': params,
-                'adjusted r-squared': round(adjusted_rsquared, 4),
+                'D': round(D, 4),
                 'bic': round(bic, 4),
+                'adjusted r-squared': round(adjusted_rsquared, 4),
             }
 
             results_list.append(summary_dict)
@@ -451,8 +460,12 @@ class Fit:
         Returns:
             None: This method directly plots the data using matplotlib and doesn't return any value.
         """
-        xmin_y_values = self.y_values[self.xmin:]
-        xmin_x_values = self.x_values[self.xmin:]
+        function = sf.pure_powerlaw
+        xmin_index = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
+            else find_x_min(self.y_values, self.x_values, function)
+
+        xmin_x_values = self.x_values[xmin_index:]
+        xmin_y_values = self.y_values[xmin_index:]
 
         # Plot raw data according to the specified scale
         plot_func = plt.loglog if scale == 'loglog' else plt.plot if scale == 'linear' else None
@@ -489,11 +502,11 @@ if __name__ == '__main__':
         return acl_
 
     # Autocorrection function (ACF) of sample data
-    ACF_RANGE = len(sample) + 1
     ACF_RANGE = 1001
     x = list(range(1, ACF_RANGE))
     acf_series = acf(sample['trade_sign'], ACF_RANGE)[1:]
 
+    # Prepare data
     xy_df = pd.DataFrame({
         'x_values': x,
         'y_values': acf_series
@@ -509,12 +522,11 @@ if __name__ == '__main__':
     print(f'Normalized Likelihood Ratio: {R}, p.value: {p}')
     print('\n')
 
-
     # Advanced Usage
 
     # Define custom power-law model: power-law with exponentially slowly varying function
     def powerlaw_with_exp_svf(x, alpha, beta, lambda_):
-        return x ** -(alpha) * sf.exponential_function(x, beta, lambda_)
+        return x ** alpha * sf.exponential_function(x, beta, lambda_)
 
     custom_powerlaw_funcs = {
         'powerlaw_with_exp_svf': powerlaw_with_exp_svf
@@ -530,8 +542,10 @@ if __name__ == '__main__':
     R, p = fit.function_compare('powerlaw_with_exp_svf', 'exponential_function', nested = True)
     print(f'Normalized Likelihood Ratio: {R}, p.value: {p}')
 
+
     # Plot
-    fit.plot_data(scale='linear')
+    fit.plot_data()
     fit.exponential_function.plot_fit()
     fit.pure_powerlaw.plot_fit()
     fit.powerlaw_with_exp_svf.plot_fit()
+

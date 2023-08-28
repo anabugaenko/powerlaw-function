@@ -1,7 +1,23 @@
 import numpy as np
 import statsmodels.api as sm
+from typing import List, Union, Tuple
 
-def linear_fit(x_values, y_values, model_type):
+
+def linear_fit(x_values: List[float], y_values: List[float], model_type: str) -> Union[None, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+    """
+    Fit a linear model to the log-transformed data.
+
+    Parameters:
+    x_values (List[float]): The independent variable values.
+    y_values (List[float]): The dependent variable values.
+    model_type (str): The type of linear model to fit ('OLS', 'RLM', or 'GLS').
+
+    Returns:
+    np.ndarray: The residuals.
+    np.ndarray: The parameters.
+    np.ndarray: The fitted values.
+
+    """
     try:
         log_x_values = np.log(x_values)
         log_y_values = np.log(y_values)

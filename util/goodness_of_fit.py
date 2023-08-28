@@ -1,50 +1,120 @@
 import numpy as np
-from scipy.stats import norm
+from typing import List, Tuple
+from scipy.stats import norm, ks_2samp
 
 
-def compute_goodness_of_fit(residuals, y_values, params):
-    def _compute_bic(log_likelihood, num_params, num_samples):
-        return np.log(num_samples) * num_params - 2 * log_likelihood
 
-    ssr = np.sum(residuals ** 2)  # sum of squared residuals
-    sst = np.sum((y_values - np.mean(y_values)) ** 2)  # total sum of squares
-    rsquared = 1 - ssr / sst
-    n = len(y_values)
-    p = len(params)  # number of predictors, assuming params is the parameter array from the fit
-    adjusted_rsquared = 1 - (1 - rsquared) * (n - 1) / (n - p - 1)
+def compute_loglikelihoods(data: List[float]) -> List[float]:
+    """
+    Compute the log likelihood of the residuals, -0.5 * np.log(2 * np.pi * np.std(residuals) ** 2) - (residuals ** 2) / (2 * np.std(residuals) ** 2)
 
-    loglikelihood = -0.5 * np.log(2 * np.pi * np.std(residuals) ** 2) - (residuals ** 2) / (2 * np.std(residuals) ** 2)
-    loglikelihood = np.sum(loglikelihood) # sum over all data points
-    bic = _compute_bic(loglikelihood, len(params), n)
+    Parameters:
+    residuals (List[float]): The residuals for which the log likelihood is to be computed.
 
-    return adjusted_rsquared, bic
+    Returns:
+    float: The log likelihoods of the residuals.
 
+    """
+    # Compute the mean and standard deviation of the residuals
+    data_mean = np.mean(data)
+    data_std = np.std(data)
 
-# def compute_loglikelihood(func, params, x_values, y_values):
-#     residuals = y_values - func(x_values, *params)
-#     std_dev_residuals = np.std(residuals)
-#     loglikelihoods = -0.5 * np.log(2 * np.pi * std_dev_residuals ** 2) - (residuals ** 2) / (2 * std_dev_residuals ** 2)
-#     return loglikelihoods
-def compute_loglikelihood(residuals):
-    # residuals = y_values - func(x_values, *params)
-    mean_residuals = np.mean(residuals) # loc = mean_residuals
-    std_dev_residuals = np.std(residuals)
-    loglikelihoods = norm.logpdf(residuals, loc=mean_residuals, scale=std_dev_residuals)
+    # Compute the log probability density function of the residuals
+    loglikelihoods = norm.logpdf(data, loc=data_mean, scale=data_std)
+
     return loglikelihoods
 
 
-def get_residual_loglikelihoods(first_series, second_series):
-    x_values = np.arange(1, len(first_series) + 1)
+def compute_bic(log_likelihood: float, num_params: int, num_samples: int) -> float:
+    """
+    Compute the Bayesian Information Criterion (BIC) for a given model. Note, the BIC is computed as:
 
-    # Trim
-    if len(first_series) != len(second_series):
-        min_len = min(len(first_series), len(second_series))
-        first_series = first_series[-min_len:]
-        second_series = second_series[-min_len:]
+        BIC = log(n) * k - 2 * log(L)
+
+    where n is the number of samples, k is the number of parameters, and L is the maximum likelihood.
+
+    Parameters:
+    - log_likelihood (float): The log-likelihood of the model.
+    - num_params (int): The number of parameters in the model.
+    - num_samples (int): The number of samples in the dataset.
+
+    Returns:
+    - float: The BIC for the model.
+
+
+    """
+    # Compute the BIC
+    bic = np.log(num_samples) * num_params - 2 * log_likelihood
+
+    return bic
+
+
+def compute_goodness_of_fit(residuals: List[float], y_values: List[float], params: List[float],
+                            model_predictions: List[float]) -> Tuple[float, float, float]:
+    """
+    Compute the goodness of fit of a model.
+
+    Parameters:
+    residuals (List[float]): The residuals of the model.
+    y_values (List[float]): The actual observed values.
+    params (List[float]): The parameters of the model.
+    model_predictions (List[float]): The predicted values by the model.
+
+    Returns:
+    float: The Kolmogorov-Smirnov statistic D.
+    float: The p-value of the KS test.
+    float: The adjusted R-squared value.
+
+    """
+    ssr = np.sum(residuals ** 2)
+
+    sst = np.sum((y_values - np.mean(y_values)) ** 2)
+
+    # Compute the R-squared value
+    rsquared = 1 - ssr / sst
+
+    # Compute the Adjusted R-squared value
+    n = len(y_values)
+    p = len(params)
+    adjusted_rsquared = 1 - (1 - rsquared) * (n - 1) / (n - p - 1)
+
+    # Compute the KS statistic and p-value
+    result = ks_2samp(y_values, model_predictions)
+    ks_statistic = result.statistic
+
+    # Compute BIC
+    loglikelihoods = compute_loglikelihoods(residuals)
+    loglikelihood = np.sum(loglikelihoods) # sum over all data points
+    bic = compute_bic(loglikelihood, len(params), n)
+
+    return ks_statistic, bic, adjusted_rsquared
+
+
+def get_residual_loglikelihoods(first_residuals: List[float], second_residuals: List[float]) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Compute the log-likelihood of two sets of residuals.
+
+    Parameters:
+    first_residuals (List[float]): The first set of residuals.
+    second_residuals (List[float]): The second set of residuals.
+
+    Returns:
+    np.ndarray: The log-likelihoods of the first set of residuals.
+    np.ndarray: The log-likelihoods of the second set of residuals.
+
+    """
+    x_values = np.arange(1, len(first_residuals) + 1)
+
+    # Trim the residuals to the same length
+    if len(first_residuals) != len(second_residuals):
+        min_len = min(len(first_residuals), len(second_residuals))
+        first_residuals = first_residuals[-min_len:]
+        second_residuals = second_residuals[-min_len:]
         x_values = x_values[-min_len:]
 
-    loglikelihoods1 = compute_loglikelihood(first_series)
-    loglikelihoods2 = compute_loglikelihood(second_series)
+    # Compute the log-likelihoods
+    loglikelihoods1 = compute_loglikelihoods(first_residuals)
+    loglikelihoods2 = compute_loglikelihoods(second_residuals)
 
     return loglikelihoods1, loglikelihoods2
 

@@ -3,29 +3,95 @@ from inspect import signature
 import numpy as np
 
 # Pure power-law function
-def pure_powerlaw(x, C, alpha):
-    return C * x ** -(alpha)
+def pure_powerlaw(x: float, C: float, alpha: float) -> float:
+    """
+    Computes the value of a pure power law function.
+
+    Parameters
+    ----------
+    x : float
+        Input value.
+    C : float
+        Scaling coefficient.
+    alpha : float
+        Power-law exponent. Positive values indicate a growth trend,
+        while negative values indicate a decay trend.
+
+    Returns
+    -------
+    float
+        Computed value of the pure power law function.
+    """
+
+    return C * x ** alpha
 
 
 # Alternative heavy-tailed functions
 
 # Powerlaw with cut-off
-def powerlaw_with_cutoff(x, alpha, lambda_, C):
-    return C * x ** -(alpha) * np.exp(-lambda_ * x)
+def powerlaw_with_cutoff(x: float, alpha: float, lambda_: float, C: float) -> float:
+    """
+    Function representing a power law with a cut-off.
+    The sign of 'alpha' determines the trend direction (positive for decay, negative for growth).
+
+    Parameters:
+    x (float): Input value.
+    alpha (float): Power-law exponent.
+    lambda_ (float): Cut-off parameter.
+    C (float): Scaling constant.
+
+    Returns:
+    float: Computed value.
+    """
+    return C * x ** alpha * np.exp(-lambda_ * x)
 
 
-# Exponential
-def exponential_function(x, beta, lambda_):
+#  Exponential
+def exponential_function(x: float, beta: float, lambda_: float) -> float:
+    """
+    Exponential function.
+
+    Parameters:
+    x (float): Input value.
+    beta (float): Scaling constant.
+    lambda_ (float): Exponential decay/growth parameter.
+
+    Returns:
+    float: Computed value.
+    """
     return beta * np.exp(-lambda_ * x)
 
 
-# Stretched Exponential
-def stretched_exponential(x, beta, lambda_):
-    return np.exp(-(x / lambda_) ** beta)
+#  Stretched Exponential
+def stretched_exponential(x: float, beta: float, lambda_: float) -> float:
+    """
+    Stretched exponential function.
+
+    Parameters:
+    x (float): Input value.
+    beta (float): Power-law exponent.
+    lambda_ (float): Exponential decay/growth parameter.
+
+    Returns:
+    float: Computed value.
+    """
+    return np.exp(-((x / lambda_) ** beta))
+
 
 
 # Log-normal
-def lognormal_function(x, mu, sigma):
+def lognormal_function(x: float, mu: float, sigma: float) -> float:
+    """
+    Log-normal function typically representing processes skewed towards larger values.
+
+    Parameters:
+    x (float): Input value.
+    mu (float): Mean of the underlying normal distribution.
+    sigma (float): Standard deviation of the underlying normal distribution.
+
+    Returns:
+    float: Computed value.
+    """
     return (1 / (x * sigma * np.sqrt(2 * np.pi))) * np.exp(-((np.log(x) - mu) ** 2) / (2 * sigma ** 2))
 
 
