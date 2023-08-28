@@ -18,26 +18,53 @@ This tells you everything you need to know for the simplest, typical use cases:
 
     import powerlaw-function
 
-    # Data
+    # Prepare data
     xy_df = pd.DataFrame({
-        'x_values': x_values,
-        'y_values': y_values
+        'x_values': x,
+        'y_values': acf_series
     })
-    
-    results = Fit(xy_df, verbose=True)
-    R, p = results.function_compare('pure_powerlaw', 'exponential_function')
-    
-    print('Alpha:', results.pure_powerlaw.params.alpha)
-    print('xmin:', results.pure_powerlaw.xmin)
-    print('BIC:', results.pure_powerlaw.bic)
-    print('Adjusted R-squared:', results.pure_powerlaw.adjusted_rsquared)
-    print(f'Likelihood Ratio: {R}, p.value: {p}')
+
+    # Basic Usage
+    fit = Fit(xy_df, verbose= True)
+    fit.pure_powerlaw.print_fitted_results()
+
+    # Direct comparison against alternative models
+    R, p = fit.function_compare('pure_powerlaw', 'exponential_function')
+    print('Power law vs. exponential_function')
+    print(f'Normalized Likelihood Ratio: {R}, p.value: {p}')
+    print('\n')
+
+
+# Advanced Usage 
+
+    # Define custom power-law model: power-law with exponentially slowly varying function
+    def powerlaw_with_exp_svf(x, alpha, beta, lambda_):
+        return x ** -(alpha) * sf.exponential_function(x, beta, lambda_)
+
+    custom_powerlaw_funcs = {
+        'powerlaw_with_exp_svf': powerlaw_with_exp_svf
+    }
+
+    # Fit custom function
+    fit.fit_powerlaw_function(custom_powerlaw_funcs)
+    fit.powerlaw_with_exp_svf.print_fitted_results()
 
 For more details on how to use the Package, including figures and approach, see the Manuscript and Article Bugaenko et al. 2023 respectively, which illustrate all of the `powerlaw-function` features and provide the mathematical background underlying these methods.
 
 # Power Laws vs. Alternative Models
 
-TODO
+TODO: Describe process
+
+    # Direct comparison against alternative models
+    print('powerlaw_with_exp_svf vs. exponential_function:')
+    R, p = fit.function_compare('powerlaw_with_exp_svf', 'exponential_function', nested = True)
+    print(f'Normalized Likelihood Ratio: {R}, p.value: {p}')
+    
+    # Plot
+    fit.plot_data(scale='linear')
+    fit.exponential_function.plot_fit()
+    fit.pure_powerlaw.plot_fit()
+    fit.powerlaw_with_exp_svf.plot_fit()
 
 # Further Development
 
