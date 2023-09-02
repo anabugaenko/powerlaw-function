@@ -5,14 +5,14 @@ import pandas as pd
 from typing import Callable
 from matplotlib import pyplot as plt
 from numpy import asarray, isinf, isnan
-from util.constants import LINEAR_FITTING_METHODS, SUPPORTED_FUNCTIONS
+from util.constants import LINEAR_FITTING_METHODS, NONLINEAR_FITTING_METHODS, SUPPORTED_FUNCTIONS
 
 from util.xmin import find_xmin
 from util import supported_functions as sf
 from util.util import block_print, enable_print
 from util.supported_functions import FunctionParams
-from util.non_linear_fit import least_squares_fit, mle_fit
-from util.goodness_of_fit import compute_goodness_of_fit, loglikelihood_ratio, get_residual_loglikelihoods
+from util.non_linear_fits import least_squares_fit, mle_fit
+from util.goodness_of_fit import get_goodness_of_fit, get_residual_loglikelihoods,  loglikelihood_ratio
 
 
 class FitResult:
@@ -45,7 +45,7 @@ class FitResult:
         self.xmin = xmin
         self.data = data
         self.params = FunctionParams(function, params)
-        self.D, self.bic, self.adjusted_rsquared = compute_goodness_of_fit(residuals=self.residuals, y_values=self.data.xmin_y_values,
+        self.D, self.bic, self.adjusted_rsquared = get_goodness_of_fit(residuals=self.residuals, y_values=self.data.xmin_y_values,
                                                                            params=self.params.__dict__, model_predictions=self.model_predictions)
 
     def to_dictionary(self):
@@ -130,7 +130,7 @@ class FitResult:
 
 
 class Fit:
-    def __init__(self, data: pd.DataFrame, xmin=None, verbose=False):
+    def __init__(self, data: pd.DataFrame, xmin=None, verbose=False, nonlinear_fitting_method: str = 'MLE'):
         """
         Represents a fitting process on given data.
 
@@ -139,6 +139,7 @@ class Fit:
             y_values (list): Y values of the data.
             fit_results_dict (dict): Dictionary to store fitting results for different functions.
             verbose (bool): If True, prints additional logs.
+            nonlinear_fitting_method (str, optional): The fitting method to use. Options are "MLE" or "least_squares". Default is "MLE".
         """
 
         # Ensure the DataFrame has exactly is 2D (has two columns)
@@ -149,6 +150,7 @@ class Fit:
         self.y_values = asarray(data.iloc[:, 1], dtype='float')
         self.fit_results_dict = {}
         self.verbose = verbose
+        self.nonlinear_fitting_method = nonlinear_fitting_method
 
         # Ensure xmin is properly assigned
         if xmin and type(xmin) != tuple and type(xmin) != list:
@@ -162,30 +164,30 @@ class Fit:
             if verbose:
                 print("Values equal to 0 in data. Throwing away these values.", file=sys.stderr)
 
-            zero_x_indx = 0 in self.x_values
-            zero_y_indx = 0 in self.y_values
-            self.x_values = np.delete(self.x_values, zero_x_indx + zero_y_indx)
-            self.y_values = np.delete(self.y_values, zero_x_indx + zero_y_indx)
+            zero_x_index = 0 in self.x_values
+            zero_y_index = 0 in self.y_values
+            self.x_values = np.delete(self.x_values, zero_x_index + zero_y_index)
+            self.y_values = np.delete(self.y_values, zero_x_index + zero_y_index)
 
         # Check for inf
         if any(isinf(self.x_values)) or any(isinf(self.y_values)):
             if verbose:
                 print("Infinite values in data. Throwing away these values.", file=sys.stderr)
 
-            inf_x_indx = isinf(self.x_values)
-            inf_y_indx = isinf(self.y_values)
-            self.x_values = np.delete(self.x_values, inf_x_indx + inf_y_indx)
-            self.y_values = np.delete(self.y_values, inf_x_indx + inf_y_indx)
+            inf_x_index = isinf(self.x_values)
+            inf_y_index = isinf(self.y_values)
+            self.x_values = np.delete(self.x_values, inf_x_index + inf_y_index)
+            self.y_values = np.delete(self.y_values, inf_x_index + inf_y_index)
 
         # Check for nan
         if any(isnan(self.x_values)) or any(isnan(self.y_values)):
             if verbose:
                 print("NaN values in data. Throwing away these values.", file=sys.stderr)
 
-            nan_x_indx = isnan(self.x_values)
-            nan_y_indx = isnan(self.y_values)
-            self.x_values = np.delete(self.x_values, nan_x_indx + nan_y_indx)
-            self.y_values = np.delete(self.y_values, nan_x_indx + nan_y_indx)
+            nan_x_index = isnan(self.x_values)
+            nan_y_index = isnan(self.y_values)
+            self.x_values = np.delete(self.x_values, nan_x_index + nan_y_index)
+            self.y_values = np.delete(self.y_values, nan_x_index + nan_y_index)
 
 
         # Check if there are enough data points for the intended fits
@@ -193,6 +195,11 @@ class Fit:
         if len(self.x_values) < min_data_points or len(self.y_values) < min_data_points:
             raise ValueError(f"Insufficient data for fitting. At least {min_data_points} data points are required",
                              file=sys.stderr)
+
+        # Check if fitting method supported
+        if nonlinear_fitting_method:
+            if nonlinear_fitting_method not in NONLINEAR_FITTING_METHODS.keys():
+                raise ValueError('Invalid fitting method. Only "MLE" and "Least_squares" are allowed.')
 
         # Fit power-laws
         self._fit_powerlaw_function()
@@ -227,14 +234,14 @@ class Fit:
             print('Fitting pure_powerlaw function using Nonlinear Least-squares fitting method.')
             function, function_name = sf.pure_powerlaw, sf.pure_powerlaw.__name__
             xmin_index = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
-                else find_xmin(self.y_values, self.x_values, function)
+                else find_xmin(self.y_values, self.x_values, function, fitting_method=self.nonlinear_fitting_method)
             result = self._process_powerlaw_function(function, function_name, xmin_index)
             self.fit_results_dict[function_name] = result
 
             print('Using Linear fitting methods to approximation pure_powerlaw fit on Loglog scale.')
             for method_name, fitting_method in LINEAR_FITTING_METHODS.items():
                 xmin_index = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
-                    else find_xmin(self.y_values, self.x_values, function)
+                    else find_xmin(self.y_values, self.x_values, function, fitting_method=self.nonlinear_fitting_method)
                 result = self._process_linear_method(fitting_method, method_name, xmin_index)
                 self.fit_results_dict[method_name] = result
 
@@ -262,8 +269,15 @@ class Fit:
         xmin_y_values = self.y_values[xmin_index:]
 
         # Fit power law using MLE or Least-sqaures
-        residuals, params, model_predictions = mle_fit(xmin_x_values, xmin_y_values, function) # least_squares_fit(xmin_x_values, xmin_y_values, function)
-        result = FitResult(function=function, function_name=function_name, fitting_method='Nonlinear Least-squares',
+        if self.nonlinear_fitting_method == "MLE":
+            residuals, params, model_predictions = mle_fit(xmin_x_values, xmin_y_values, function)
+        elif self.nonlinear_fitting_method == "Least_squares":
+            residuals, params, model_predictions = least_squares_fit(xmin_x_values, xmin_y_values, function)
+        else:
+            raise ValueError("Invalid fitting_method. Options are 'MLE' or 'Least_squares'.")
+
+        # Store fitted results
+        result = FitResult(function=function, function_name=function_name, fitting_method= self.nonlinear_fitting_method,
                            residuals=residuals, params=params, model_predictions=model_predictions, xmin_index=xmin_index,
                            xmin=self.x_values[xmin_index], data=pd.DataFrame({
                 'xmin_x_values': xmin_x_values,
@@ -292,10 +306,10 @@ class Fit:
         # Check for negative values for fit in logspace
         if any(self.x_values < 0) or any(self.y_values < 0):
 
-            neg_x_indx = x_values < 0
-            neg_y_indx = y_values < 0
-            x_values = np.delete(x_values, neg_x_indx + neg_y_indx)
-            y_values = np.delete(y_values, neg_x_indx + neg_y_indx)
+            neg_x_index = x_values < 0
+            neg_y_index = y_values < 0
+            x_values = np.delete(x_values, neg_x_index + neg_y_index)
+            y_values = np.delete(y_values, neg_x_index + neg_y_index)
 
         xmin_x_values = x_values[xmin_index:]
         xmin_y_values = y_values[xmin_index:]
@@ -339,9 +353,9 @@ class Fit:
 
             for function_name, function in functions.items():
                 print(f'Using Nonlinear Least-squares fitting method to directly fit {function_name}.')
-                xmin_indx = np.where(self.x_values == xmin)[0][0] if xmin is not None \
-                    else find_xmin(self.y_values, self.x_values, function)
-                result = self._process_powerlaw_function(function, function_name, xmin_indx)
+                xmin_index = np.where(self.x_values == xmin)[0][0] if xmin is not None \
+                    else find_xmin(self.y_values, self.x_values, function, fitting_method=self.nonlinear_fitting_method)
+                result = self._process_powerlaw_function(function, function_name, xmin_index)
                 self.fit_results_dict[function_name] = result
 
         except Exception as e:
@@ -469,7 +483,7 @@ class Fit:
         """
         function = sf.pure_powerlaw
         xmin_index = np.where(self.x_values == self.xmin)[0][0] if self.xmin is not None \
-            else find_xmin(self.y_values, self.x_values, function)
+            else find_xmin(self.y_values, self.x_values, function, fitting_method=self.nonlinear_fitting_method)
 
         # Option to plot entire data or from lower bound scaling region to the power-law behavior xmin.
         if scaling_range:
@@ -558,4 +572,3 @@ if __name__ == '__main__':
     fit.exponential_function.plot_fit()
     fit.pure_powerlaw.plot_fit()
     fit.powerlaw_with_exp_svf.plot_fit()
-

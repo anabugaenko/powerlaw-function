@@ -26,35 +26,6 @@ def loglikelihoods(data: List[float]) -> List[float]:
     return loglikelihoods
 
 
-def get_residual_loglikelihoods(first_residuals: List[float], second_residuals: List[float]) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Compute the log-likelihood of two sets of residuals.
-
-    Parameters:
-    first_residuals (List[float]): The first set of residuals.
-    second_residuals (List[float]): The second set of residuals.
-
-    Returns:
-    np.ndarray: The log-likelihoods of the first set of residuals.
-    np.ndarray: The log-likelihoods of the second set of residuals.
-
-    """
-    x_values = np.arange(1, len(first_residuals) + 1)
-
-    # Trim the residuals to the same length
-    if len(first_residuals) != len(second_residuals):
-        min_len = min(len(first_residuals), len(second_residuals))
-        first_residuals = first_residuals[-min_len:]
-        second_residuals = second_residuals[-min_len:]
-        x_values = x_values[-min_len:]
-
-    # Compute the log-likelihoods
-    loglikelihoods1 = loglikelihoods(first_residuals)
-    loglikelihoods2 = loglikelihoods(second_residuals)
-
-    return loglikelihoods1, loglikelihoods2
-
-
 def compute_bic_from_loglikelihood(log_likelihood: float, num_params: int, num_samples: int) -> float:
     """
     Compute the Bayesian Information Criterion (BIC) for a given model. Note, the BIC is computed as:
@@ -104,8 +75,8 @@ def compute_bic_from_residuals(residuals: np.ndarray, num_parameters: int) -> fl
     return BIC
 
 
-def compute_goodness_of_fit(residuals: List[float], y_values: List[float], params: List[float],
-                            model_predictions: List[float], bic_method='residuals') -> Tuple[float, float, float]:
+def get_goodness_of_fit(residuals: List[float], y_values: List[float], params: List[float],
+                        model_predictions: List[float], bic_method='residuals') -> Tuple[float, float, float]:
     """
     Compute the goodness of fit of a model.
 
@@ -147,6 +118,33 @@ def compute_goodness_of_fit(residuals: List[float], y_values: List[float], param
     return ks_statistic, bic, adjusted_rsquared
 
 
+def get_residual_loglikelihoods(first_residuals: List[float], second_residuals: List[float]) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Compute the log-likelihood of two sets of residuals.
+
+    Parameters:
+    first_residuals (List[float]): The first set of residuals.
+    second_residuals (List[float]): The second set of residuals.
+
+    Returns:
+    np.ndarray: The log-likelihoods of the first set of residuals.
+    np.ndarray: The log-likelihoods of the second set of residuals.
+
+    """
+    x_values = np.arange(1, len(first_residuals) + 1)
+
+    # Trim the residuals to the same length
+    if len(first_residuals) != len(second_residuals):
+        min_len = min(len(first_residuals), len(second_residuals))
+        first_residuals = first_residuals[-min_len:]
+        second_residuals = second_residuals[-min_len:]
+        x_values = x_values[-min_len:]
+
+    # Compute the log-likelihoods
+    loglikelihoods1 = loglikelihoods(first_residuals)
+    loglikelihoods2 = loglikelihoods(second_residuals)
+
+    return loglikelihoods1, loglikelihoods2
 
 # Much of this function was inspired by Jeff Alstott and Aaron Clauset powerlaw code, specifically around lines 1748-1822 of
 # the code at: https://github.com/jeffalstott/powerlaw/blob/master/powerlaw.py

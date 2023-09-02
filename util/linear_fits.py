@@ -35,7 +35,7 @@ def linear_fit(x_values: List[float], y_values: List[float], model_type: str) ->
 
         results = model.fit()
         params = results.params  # const, slope
-        fitted_values = log_x_values * params[1] + params[0]
+        fitted_values = log_x_values * params[0] + params[0]
         residuals = log_y_values - fitted_values
         return residuals, params, fitted_values
     except Exception as e:
