@@ -1,11 +1,11 @@
 import numpy as np
 from typing import List, Tuple, Callable
 from scipy.stats import ks_2samp
-from util.goodness_of_fit import loglikelihoods
-from util.non_linear_fits import least_squares_fit, mle_fit
+from utils.goodness_of_fit import loglikelihoods, compute_bic_from_residuals
+from utils.non_linear_fits import least_squares_fit, mle_fit
 
 
-def find_xmin(y_values: List[float], x_values: List[float], function: Callable, fitting_method: str = 'MLE') -> int:
+def find_xmin(y_values: List[float], x_values: List[float], function: Callable, fitting_method: str = 'MLE', xmin_distance='D') -> int:
     """
     Find the index of the value of x_min that minimizes the KS statistic.
 
@@ -14,6 +14,8 @@ def find_xmin(y_values: List[float], x_values: List[float], function: Callable, 
     x_values (List[float]): The independent variable values.
     function (Callable): The function to fit.
     nonlinear_fitting_method (str, optional): The fitting method to use. Options are "MLE" or "least_squares". Default is "MLE".
+    xmin_distance (str, optional): The optimal xmin is defined as the value that minimizes the Kolmogorov-Smirnov distance, D,
+    between the empirical data. As D can be insensitive to differences at the tails It may be desirable to use other metrics such as BIC.
 
     Returns:
     int: The index of the value of x_min that minimizes the KS statistic.
@@ -32,6 +34,7 @@ def find_xmin(y_values: List[float], x_values: List[float], function: Callable, 
         # Adjust lags to match the size of data
         x_adjusted = x_values[x_min_indx:]
 
+        # Perform fit based on the selected method
         if fitting_method == 'MLE':
             residuals, params, model_predictions = mle_fit(x_adjusted, data, function)
         elif fitting_method == 'Least_squares':
@@ -39,12 +42,22 @@ def find_xmin(y_values: List[float], x_values: List[float], function: Callable, 
         else:
             raise ValueError('Invalid fitting_method. Options are "MLE", "Least_squares".')
 
-        # Compute the KS statistic and p-value
-        result = ks_2samp(data, model_predictions, alternative='two-sided')
-        D = result.statistic
+        # Find xmin using specified metric (KS-distance or BIC)
+        if xmin_distance == 'D':
+            # Compute the KS statistic
+            result = ks_2samp(data, model_predictions, alternative='two-sided')
+            D = result.statistic
+            results_dict[x_min_indx + 1] = D
+        elif xmin_distance == 'BIC':
+            # Compute Bayesian Information Criterion (BIC)
+            p_length = len(params)
+            bic = compute_bic_from_residuals(residuals=residuals, num_parameters=p_length)
+            results_dict[x_min_indx + 1] = bic
+        else:
+            raise ValueError(f'Unknown xmin_distance metric. Expected "D" or "BIC".')
 
-        results_dict[x_min_indx + 1] = D
 
+    # Choose D or BIC that minmizes respective value
     min_x_min = min(results_dict, key=results_dict.get)
     return min_x_min
 

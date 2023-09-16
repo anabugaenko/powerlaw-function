@@ -1,6 +1,7 @@
 import numpy as np
-from typing import List, Tuple
 from scipy import stats
+from typing import List, Tuple
+
 
 
 def loglikelihoods(data: List[float]) -> List[float]:
@@ -8,7 +9,7 @@ def loglikelihoods(data: List[float]) -> List[float]:
     Compute the log likelihood of the data, hence  incorporates the variance of the data and assumes a certain distribution
     (i.e., normal); -0.5 * np.log(2 * np.pi * np.std(data) ** 2) - (data ** 2) / (2 * np.std(data) ** 2).
 
-    TODO: Make chosen distribution adaptive/ dynamic as per issue #10
+    TODO: Make chosen distribution adaptive/ dynamic as per issue #10 as loc (the mean) greatly impacts fitted results.
 
     Parameters:
     data (List[float]): The data for which the log likelihood is to be computed.
@@ -17,7 +18,7 @@ def loglikelihoods(data: List[float]) -> List[float]:
     float: The log likelihoods of the data.
 
     """
-    # Compute the standard deviation of the data
+    # Compute the standard deviation of the data as an initial parameter
     data_std = np.std(data)
 
     # Compute the log probability density function of the data
@@ -102,6 +103,11 @@ def get_goodness_of_fit(residuals: List[float], y_values: List[float], params: L
     n = len(y_values)
     p = len(params)
     adjusted_rsquared = 1 - (1 - rsquared) * (n - 1) / (n - p - 1)
+
+    # MAPE metric is an error metric that is less sensitive to outliers than root Mean Squared Error (MAE).
+    #from sklearn.metrics import mean_absolute_error
+    # mape = np.mean(np.abs((y_true - y_pred) / y_true))
+    # mae = mean_absolute_error(y_true, y_pred)
 
     # Compute the KS statistic and p-value
     result = stats.ks_2samp(y_values, model_predictions, alternative='two-sided')

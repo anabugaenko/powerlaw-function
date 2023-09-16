@@ -1,7 +1,7 @@
 from scipy.stats import laplace, norm, t, expon, lognorm, powerlaw, gumbel_l, gumbel_r
-from util import supported_functions as sf
-from util.linear_fits import linear_fit
-from util.non_linear_fits import mle_fit, least_squares_fit
+from utils import supported_functions as sf
+from utils.linear_fits import linear_fit
+from utils.non_linear_fits import mle_fit, least_squares_fit
 
 LINEAR_FITTING_METHODS = {
     # Mapping from name to linear fitting methods
@@ -20,7 +20,7 @@ NONLINEAR_FITTING_METHODS = {
 
 SUPPORTED_FUNCTIONS = {
     # Pure Power law
-    sf.pure_powerlaw.__name__: sf.pure_powerlaw,
+    sf.powerlaw.__name__: sf.powerlaw,
 
     # Alternative models
     sf.powerlaw_with_cutoff.__name__: sf.powerlaw_with_cutoff,

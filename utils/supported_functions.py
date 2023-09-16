@@ -3,7 +3,7 @@ from inspect import signature
 import numpy as np
 
 # Pure power-law function
-def pure_powerlaw(x: float, C: float, alpha: float) -> float:
+def powerlaw(x: float, C: float, alpha: float) -> float:
     """
     Computes the value of a pure power law function.
 
@@ -14,8 +14,7 @@ def pure_powerlaw(x: float, C: float, alpha: float) -> float:
     C : float
         Scaling coefficient.
     alpha : float
-        Power-law exponent. Positive values indicate a growth trend,
-        while negative values indicate a decay trend.
+        Power-law exponent. Positive values indicate a growth trend, while negative values indicate a decay trend (invers power law relation).
 
     Returns
     -------
@@ -31,8 +30,8 @@ def pure_powerlaw(x: float, C: float, alpha: float) -> float:
 # Powerlaw with cut-off
 def powerlaw_with_cutoff(x: float, alpha: float, lambda_: float, C: float) -> float:
     """
-    Function representing a power law with a cut-off.
-    The sign of 'alpha' determines the trend direction (positive for decay, negative for growth).
+    Function representing a power law with a cut-off. The sign of 'alpha' determines the trend direction
+    (positive for decay, negative for growth).
 
     Parameters:
     x (float): Input value.
@@ -59,24 +58,27 @@ def exponential_function(x: float, beta: float, lambda_: float) -> float:
     Returns:
     float: Computed value.
     """
-    return beta * np.exp(-lambda_ * x)
+    return beta * np.exp(lambda_ * x)
 
 
 #  Stretched Exponential
-def stretched_exponential(x: float, beta: float, lambda_: float) -> float:
+def stretched_exponential(x: float, beta: float, lambda_: float, growth: bool = False) -> float:
     """
-    Stretched exponential function.
+    Stretched exponential function that represents both growth and decay.
 
     Parameters:
     x (float): Input value.
     beta (float): Power-law exponent.
-    lambda_ (float): Exponential decay/growth parameter.
+    lambda_ (float): Exponential growth/decay parameter.
+    growth (bool): True for growth, False for decay.
 
     Returns:
     float: Computed value.
     """
-    return np.exp(-((x / lambda_) ** beta))
-
+    if growth:
+        return np.exp(((x / lambda_) ** beta))
+    else:
+        return np.exp(-((x / lambda_) ** beta))
 
 
 # Log-normal

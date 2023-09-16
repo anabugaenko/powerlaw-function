@@ -5,7 +5,7 @@ from scipy.optimize import minimize
 from scipy.optimize import least_squares
 from typing import List, Callable, Union, Tuple
 
-from util.goodness_of_fit import loglikelihoods
+from utils.goodness_of_fit import loglikelihoods
 
 
 def mle_fit(x_values: List[float], y_values: List[float], function: Callable) -> Union[
@@ -24,7 +24,7 @@ def mle_fit(x_values: List[float], y_values: List[float], function: Callable) ->
     np.ndarray: The fitted values.
     """
     num_params = function.__code__.co_argcount - 1  # Exclude the 'x' parameter
-    initial_guess = [0.1] * num_params  # Initialize all parameters with 0.1 for MLE
+    initial_guess = [0] * num_params  # Initialize all parameters with 0.1 for MLE
 
     # Compute negative loglikelihood
     def _negative_loglikelihood(params: np.ndarray, x_values: np.ndarray, y_values: np.ndarray) -> float:
