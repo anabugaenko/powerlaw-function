@@ -45,11 +45,6 @@ def powerlaw_with_cutoff(x: float, alpha: float, lambda_: float, C: float) -> fl
     return C * x ** alpha * np.exp(-lambda_ * x)
 
 
-#Power law with exponentially slowly varing function
-def powerlaw_with_exp_svf(x, alpha, beta, lambda_):
-    return x ** alpha * exponential_function(x, beta, lambda_)
-
-
 #  Exponential
 def exponential_function(x: float, beta: float, lambda_: float) -> float:
     """
@@ -64,6 +59,12 @@ def exponential_function(x: float, beta: float, lambda_: float) -> float:
     float: Computed value.
     """
     return beta * np.exp(lambda_ * x)
+
+
+#Power law with exponentially slowly varing function
+def powerlaw_with_exp_svf(x, alpha, beta, lambda_):
+    return x ** alpha * exponential_function(x, beta, lambda_)
+
 
 
 #  Stretched Exponential

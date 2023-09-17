@@ -24,6 +24,7 @@ SUPPORTED_FUNCTIONS = {
 
     # Alternative models
     sf.powerlaw_with_cutoff.__name__: sf.powerlaw_with_cutoff,
+    sf.powerlaw_with_exp_svf.__name__: sf.powerlaw_with_exp_svf,
     sf.exponential_function.__name__: sf.exponential_function,
     sf.stretched_exponential.__name__: sf.stretched_exponential,
     sf.lognormal_function.__name__: sf.lognormal_function
