@@ -45,6 +45,39 @@ def powerlaw_with_cutoff(x: float, alpha: float, lambda_: float, C: float) -> fl
     return C * x ** alpha * np.exp(-lambda_ * x)
 
 
+def powerlaw_with_exp_svf(x: float, alpha: float, beta: float, lambda_: float) -> float:
+    """
+    Computes the value of a power law function modified by an exponentially slowly varying function.
+
+    The function can be expressed as:
+    f(x) = x^alpha * exp(beta * x^lambda)
+
+    Where `x^alpha` represents the power law behavior and `exp(beta * x^lambda)` represents the exponentially slowly
+    varying component. a slowly varying function refers to a function that does not have a fixed, finite limit when the
+    variable approaches infinity The slowly varying function L(x) essentially captures any mild variations in the tail
+    behavior that the pure power-law function x^(-α) cannot account for.
+
+    Parameters
+    ----------
+    x : float
+        Input value.
+    alpha : float
+        Power-law exponent. Positive values indicate a growth trend, while negative values represent an inverse power law relation.
+    beta : float
+        Coefficient for the exponential function, influencing the strength of the exponential variation.
+    lambda_ : float
+        Exponent for the input value `x` within the exponential function. Modulates the behavior of the exponential term.
+
+    Returns
+    -------
+    float
+        Computed value of the power law function with exponentially slowly varying modification.
+    """
+
+    return x ** alpha * exponential_function(x, beta, lambda_)
+
+
+
 #  Exponential
 def exponential_function(x: float, beta: float, lambda_: float) -> float:
     """
@@ -59,12 +92,6 @@ def exponential_function(x: float, beta: float, lambda_: float) -> float:
     float: Computed value.
     """
     return beta * np.exp(lambda_ * x)
-
-
-#Power law with exponentially slowly varing function
-def powerlaw_with_exp_svf(x, alpha, beta, lambda_):
-    return x ** alpha * exponential_function(x, beta, lambda_)
-
 
 
 #  Stretched Exponential
