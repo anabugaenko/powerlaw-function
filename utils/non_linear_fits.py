@@ -8,8 +8,9 @@ from typing import List, Callable, Union, Tuple
 from utils.goodness_of_fit import loglikelihoods
 
 
-def mle_fit(x_values: List[float], y_values: List[float], function: Callable) -> Union[
-    None, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+def mle_fit(
+    x_values: List[float], y_values: List[float], function: Callable
+) -> Union[None, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """
     Fits a function or curve to the data using the maximum likelihood estimation (MLE) method.
 
@@ -38,7 +39,7 @@ def mle_fit(x_values: List[float], y_values: List[float], function: Callable) ->
     try:
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
-            result = minimize(_negative_loglikelihood, initial_guess, args=(x_values, y_values), method='Nelder-Mead')
+            result = minimize(_negative_loglikelihood, initial_guess, args=(x_values, y_values), method="Nelder-Mead")
             params = result.x
 
         fitted_values = function(x_values, *params)
@@ -49,7 +50,9 @@ def mle_fit(x_values: List[float], y_values: List[float], function: Callable) ->
         return None
 
 
-def least_squares_fit(x_values: List[float], y_values: List[float], function: Callable) -> Union[None, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+def least_squares_fit(
+    x_values: List[float], y_values: List[float], function: Callable
+) -> Union[None, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """
     Fits a function or curve to the data using the least squares method.
 
@@ -74,7 +77,7 @@ def least_squares_fit(x_values: List[float], y_values: List[float], function: Ca
     try:
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
-            result = least_squares(_residuals, initial_guess, args=(x_values, y_values), loss='soft_l1')
+            result = least_squares(_residuals, initial_guess, args=(x_values, y_values), loss="soft_l1")
             params = result.x
 
         fitted_values = function(x_values, *params)

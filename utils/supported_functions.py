@@ -2,6 +2,7 @@ from inspect import signature
 
 import numpy as np
 
+
 # Pure power-law function
 def powerlaw(x: float, C: float, alpha: float) -> float:
     """
@@ -22,10 +23,11 @@ def powerlaw(x: float, C: float, alpha: float) -> float:
         Computed value of the pure power law function.
     """
 
-    return C * x ** alpha
+    return C * x**alpha
 
 
 # Alternative heavy-tailed functions
+
 
 # Powerlaw with cut-off
 def powerlaw_with_cutoff(x: float, alpha: float, lambda_: float, C: float) -> float:
@@ -42,7 +44,7 @@ def powerlaw_with_cutoff(x: float, alpha: float, lambda_: float, C: float) -> fl
     Returns:
     float: Computed value.
     """
-    return C * x ** alpha * np.exp(-lambda_ * x)
+    return C * x**alpha * np.exp(-lambda_ * x)
 
 
 def powerlaw_with_exp_svf(x: float, alpha: float, beta: float, lambda_: float) -> float:
@@ -74,8 +76,7 @@ def powerlaw_with_exp_svf(x: float, alpha: float, beta: float, lambda_: float) -
         Computed value of the power law function with exponentially slowly varying modification.
     """
 
-    return x ** alpha * exponential_function(x, beta, lambda_)
-
+    return x**alpha * exponential_function(x, beta, lambda_)
 
 
 #  Exponential
@@ -127,7 +128,7 @@ def lognormal_function(x: float, mu: float, sigma: float) -> float:
     Returns:
     float: Computed value.
     """
-    return (1 / (x * sigma * np.sqrt(2 * np.pi))) * np.exp(-((np.log(x) - mu) ** 2) / (2 * sigma ** 2))
+    return (1 / (x * sigma * np.sqrt(2 * np.pi))) * np.exp(-((np.log(x) - mu) ** 2) / (2 * sigma**2))
 
 
 # Helper Classes

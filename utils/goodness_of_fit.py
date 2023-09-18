@@ -3,7 +3,6 @@ from scipy import stats
 from typing import List, Tuple
 
 
-
 def loglikelihoods(data: List[float]) -> List[float]:
     """
     Compute the log likelihood of the data, hence  incorporates the variance of the data and assumes a certain distribution
@@ -71,13 +70,18 @@ def compute_bic_from_residuals(residuals: np.ndarray, num_parameters: int) -> fl
 
     """
     n = len(residuals)
-    RSS = np.sum(residuals ** 2)
-    BIC = n * np.log(RSS/n) + num_parameters * np.log(n)
+    RSS = np.sum(residuals**2)
+    BIC = n * np.log(RSS / n) + num_parameters * np.log(n)
     return BIC
 
 
-def get_goodness_of_fit(residuals: List[float], y_values: List[float], params: List[float],
-                        model_predictions: List[float], bic_method='residuals') -> Tuple[float, float, float]:
+def get_goodness_of_fit(
+    residuals: List[float],
+    y_values: List[float],
+    params: List[float],
+    model_predictions: List[float],
+    bic_method="residuals",
+) -> Tuple[float, float, float]:
     """
     Compute the goodness of fit of a model.
 
@@ -95,7 +99,7 @@ def get_goodness_of_fit(residuals: List[float], y_values: List[float], params: L
 
     """
     # Compute the R-squared value
-    ssr = np.sum(residuals ** 2)
+    ssr = np.sum(residuals**2)
     sst = np.sum((y_values - np.mean(y_values)) ** 2)
     rsquared = 1 - ssr / sst
 
@@ -105,18 +109,18 @@ def get_goodness_of_fit(residuals: List[float], y_values: List[float], params: L
     adjusted_rsquared = 1 - (1 - rsquared) * (n - 1) / (n - p - 1)
 
     # MAPE metric is an error metric that is less sensitive to outliers than root Mean Squared Error (MAE).
-    #from sklearn.metrics import mean_absolute_error
+    # from sklearn.metrics import mean_absolute_error
     # mape = np.mean(np.abs((y_true - y_pred) / y_true))
     # mae = mean_absolute_error(y_true, y_pred)
 
     # Compute the KS statistic and p-value
-    result = stats.ks_2samp(y_values, model_predictions, alternative='two-sided')
+    result = stats.ks_2samp(y_values, model_predictions, alternative="two-sided")
     ks_statistic = result.statistic
 
     # Compute BIC
-    if bic_method == 'log_likelihood':
+    if bic_method == "log_likelihood":
         log_likelihoods = loglikelihoods(residuals)
-        loglikelihood = np.sum(log_likelihoods) # sum over all data points
+        loglikelihood = np.sum(log_likelihoods)  # sum over all data points
         bic = compute_bic_from_loglikelihood(loglikelihood, len(params), n)
     else:
         bic = compute_bic_from_residuals(residuals, p)
@@ -124,7 +128,9 @@ def get_goodness_of_fit(residuals: List[float], y_values: List[float], params: L
     return ks_statistic, bic, adjusted_rsquared
 
 
-def get_residual_loglikelihoods(first_residuals: List[float], second_residuals: List[float]) -> Tuple[np.ndarray, np.ndarray]:
+def get_residual_loglikelihoods(
+    first_residuals: List[float], second_residuals: List[float]
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Compute the log-likelihood of two sets of residuals.
 
@@ -151,6 +157,7 @@ def get_residual_loglikelihoods(first_residuals: List[float], second_residuals: 
     loglikelihoods2 = loglikelihoods(second_residuals)
 
     return loglikelihoods1, loglikelihoods2
+
 
 # Much of this function was inspired by Jeff Alstott and Aaron Clauset powerlaw code, specifically around lines 1748-1822 of
 # the code at: https://github.com/jeffalstott/powerlaw/blob/master/powerlaw.py

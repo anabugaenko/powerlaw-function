@@ -3,7 +3,9 @@ import statsmodels.api as sm
 from typing import List, Union, Tuple
 
 
-def linear_fit(x_values: List[float], y_values: List[float], model_type: str) -> Union[None, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+def linear_fit(
+    x_values: List[float], y_values: List[float], model_type: str
+) -> Union[None, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """
     Fit a linear model to the log-transformed data.
 
@@ -24,14 +26,14 @@ def linear_fit(x_values: List[float], y_values: List[float], model_type: str) ->
 
         X = sm.add_constant(log_x_values)
 
-        if model_type == 'OLS':
+        if model_type == "OLS":
             model = sm.OLS(log_y_values, X)
-        elif model_type == 'RLM':
+        elif model_type == "RLM":
             model = sm.RLM(log_y_values, X, M=sm.robust.norms.HuberT())
-        elif model_type == 'GLS':
+        elif model_type == "GLS":
             model = sm.GLS(log_y_values, X)
         else:
-            raise ValueError(f'Unknown model type: {model_type}')
+            raise ValueError(f"Unknown model type: {model_type}")
 
         results = model.fit()
         params = results.params  # const, slope
@@ -41,4 +43,3 @@ def linear_fit(x_values: List[float], y_values: List[float], model_type: str) ->
     except Exception as e:
         print(f"Failed to fit curve for model {model_type}. Error: {e}")
         return None
-
