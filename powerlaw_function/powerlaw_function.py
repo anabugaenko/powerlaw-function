@@ -72,19 +72,19 @@ class FitResult:
 
     def print_fitted_results(self):
         print('')
-        print(f'For {self.function_name} fitted using {self.fitting_method};')
+        print(f'For {self.function_name} fitted using {self.fitting_method}:')
         print('')
-        print('Pre-fitting parameters:')
+        print('Pre-fitting parameters;')
         print(f'xmin: {self.xmin}')
 
         print('')
-        print('Fitting parameters:')
+        print('Fitting parameters;')
         params_dict = self.params.__dict__
         for param_name, param_value in params_dict.items():
             print(f'{param_name} = {param_value}')
 
         print('')
-        print('Goodness of fit to data:')
+        print('Goodness of fit to data;')
         print('D =', self.D)
         print('bic =', self.bic)
         print('Adjusted R-squared =', self.adjusted_rsquared)
@@ -600,7 +600,6 @@ if __name__ == '__main__':
     # Fit custom function
     fit.fit_powerlaw_function(custom_powerlaw_funcs)
     fit.linear_function.print_fitted_results()
-
 
     # Direct comparison against alternative models
     print('powerlaw vs. linear_function:')
