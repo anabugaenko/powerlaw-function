@@ -31,6 +31,7 @@ class FitResult:
         params (FunctionParams): Parameters of the function.
         D (float): KS-distance value.
         bic (float): Bayesian Information Criterion for the model.
+        mape (float): MAPE metric is an error metric that is less sensitive to outliers than root Mean Squared Error (MAE)
         adjusted_rsquared (float): Adjusted R squared value.
     """
 
@@ -47,7 +48,7 @@ class FitResult:
         self.xmin = xmin
         self.data = data
         self.params = FunctionParams(function, params)
-        self.D, self.bic, self.adjusted_rsquared = get_goodness_of_fit(
+        self.D, self.bic, self.mape, self.adjusted_rsquared = get_goodness_of_fit(
             residuals=self.residuals,
             y_values=self.data.xmin_y_values,
             params=self.params.__dict__,
@@ -72,6 +73,7 @@ class FitResult:
             "data": self.data,
             "D": self.D,
             "bic": self.bic,
+            "mape": self.mape,
             "adjusted_rsquared": self.adjusted_rsquared,
         }
 
@@ -92,6 +94,7 @@ class FitResult:
         print("Goodness of fit to data;")
         print("D =", self.D)
         print("bic =", self.bic)
+        print("mape =", self.mape)
         print("Adjusted R-squared =", self.adjusted_rsquared)
         print("\n")
 
@@ -495,6 +498,7 @@ class Fit:
             params = result_dict["params"]
             D = result_dict["D"]
             bic = result_dict["bic"]
+            mape = result_dict["mape"]
             adjusted_rsquared = result_dict["adjusted_rsquared"]
 
             summary_dict = {
@@ -505,6 +509,7 @@ class Fit:
                 "fitting param": params,
                 "D": round(D, 4),
                 "bic": round(bic, 4),
+                "mape": round(mape, 4),
                 "adjusted r-squared": round(adjusted_rsquared, 4),
             }
 

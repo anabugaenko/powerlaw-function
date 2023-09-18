@@ -109,8 +109,8 @@ def get_goodness_of_fit(
 
     # MAPE metric is an error metric that is less sensitive to outliers than root Mean Squared Error (MAE).
     # from sklearn.metrics import mean_absolute_error
-    # mape = np.mean(np.abs((y_true - y_pred) / y_true))
     # mae = mean_absolute_error(y_true, y_pred)
+    mape = np.mean(np.abs((y_values - model_predictions) / y_values)) * 100
 
     # Compute the KS statistic and p-value
     result = stats.ks_2samp(y_values, model_predictions, alternative="two-sided")
@@ -124,7 +124,7 @@ def get_goodness_of_fit(
     else:
         bic = compute_bic_from_residuals(residuals, p)
 
-    return ks_statistic, bic, adjusted_rsquared
+    return ks_statistic, bic, mape, adjusted_rsquared
 
 
 def get_residual_loglikelihoods(
