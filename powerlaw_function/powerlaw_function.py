@@ -5,13 +5,13 @@ import pandas as pd
 from typing import Callable
 from matplotlib import pyplot as plt
 from numpy import asarray, isinf, isnan
-from utils.constants import LINEAR_FITTING_METHODS, NONLINEAR_FITTING_METHODS, SUPPORTED_FUNCTIONS
 
 from utils.xmin import find_xmin
 from utils import supported_functions as sf
 from utils.util import block_print, enable_print
 from utils.supported_functions import FunctionParams
 from utils.non_linear_fits import least_squares_fit, mle_fit
+from utils.constants import LINEAR_FITTING_METHODS, NONLINEAR_FITTING_METHODS, SUPPORTED_FUNCTIONS
 from utils.goodness_of_fit import get_goodness_of_fit, get_residual_loglikelihoods, loglikelihood_ratio
 
 

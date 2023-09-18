@@ -1,9 +1,7 @@
+import numpy as np
 from inspect import signature
 
-import numpy as np
 
-
-# Pure power-law function
 def powerlaw(x: float, C: float, alpha: float) -> float:
     """
     Computes the value of a pure power law function.
@@ -29,7 +27,6 @@ def powerlaw(x: float, C: float, alpha: float) -> float:
 # Alternative heavy-tailed functions
 
 
-# Powerlaw with cut-off
 def powerlaw_with_cutoff(x: float, alpha: float, lambda_: float, C: float) -> float:
     """
     Function representing a power law with a cut-off. The sign of 'alpha' determines the trend direction
@@ -79,7 +76,6 @@ def powerlaw_with_exp_svf(x: float, alpha: float, beta: float, lambda_: float) -
     return x**alpha * exponential_function(x, beta, lambda_)
 
 
-#  Exponential
 def exponential_function(x: float, beta: float, lambda_: float) -> float:
     """
     Exponential function.
@@ -95,7 +91,6 @@ def exponential_function(x: float, beta: float, lambda_: float) -> float:
     return beta * np.exp(lambda_ * x)
 
 
-#  Stretched Exponential
 def stretched_exponential(x: float, beta: float, lambda_: float, growth: bool = False) -> float:
     """
     Stretched exponential function that represents both growth and decay.
@@ -115,7 +110,6 @@ def stretched_exponential(x: float, beta: float, lambda_: float, growth: bool = 
         return np.exp(-((x / lambda_) ** beta))
 
 
-# Log-normal
 def lognormal_function(x: float, mu: float, sigma: float) -> float:
     """
     Log-normal function typically representing processes skewed towards larger values.

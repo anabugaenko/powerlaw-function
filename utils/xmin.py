@@ -1,8 +1,9 @@
 import numpy as np
-from typing import List, Tuple, Callable
 from scipy.stats import ks_2samp
-from utils.goodness_of_fit import loglikelihoods, compute_bic_from_residuals
+from typing import List, Tuple, Callable
+
 from utils.non_linear_fits import least_squares_fit, mle_fit
+from utils.goodness_of_fit import loglikelihoods, compute_bic_from_residuals
 
 
 def find_xmin(

@@ -9,7 +9,6 @@ def loglikelihoods(data: List[float]) -> List[float]:
     (i.e., normal); -0.5 * np.log(2 * np.pi * np.std(data) ** 2) - (data ** 2) / (2 * np.std(data) ** 2).
 
     TODO: Make chosen distribution adaptive/ dynamic as per issue #10 as loc (the mean) greatly impacts fitted results.
-
     Parameters:
     data (List[float]): The data for which the log likelihood is to be computed.
 
