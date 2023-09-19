@@ -146,11 +146,15 @@ class Fit:
         self, data: pd.DataFrame, xmin=None, verbose=False, nonlinear_fit_method: str = "MLE", xmin_distance="D"
     ):
         """
-        Represents a fitting process on given data.
+        Represents a fitting process on a given function.  The function is represented as
+        a set of X values and a corresponding set of Y values.  In the case of fitting
+        an autocorrelation function the X values would be the lag, and the Y value would be the 
+        correlation coefficient.  For fitting continuous functions such as a CDF we typically
+        pass in a linearly-spaced subset of the domain, e.g. np.linspace(0, 1, num=100).
 
         Attributes:
-            x_values (list): X values of the data.
-            y_values (list): Y values of the data.
+            x_values (list): X values of the function.
+            y_values (list): Y values of the function.
             fit_results_dict (dict): Dictionary to store fitting results for different functions.
             verbose (bool): If True, prints additional logs.
             nonlinear_fit_method (str, optional): The fitting method to use. Options are "MLE" or "least_squares". Default is "MLE".
