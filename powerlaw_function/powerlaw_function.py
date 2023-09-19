@@ -152,14 +152,6 @@ class Fit:
         correlation coefficient.  For fitting continuous functions such as a CDF we typically
         pass in a linearly-spaced subset of the domain, e.g. np.linspace(0, 1, num=100).
 
-        Attributes:
-            x_values (list): X values of the function.
-            y_values (list): Y values of the function.
-            fit_results_dict (dict): Dictionary to store fitting results for different functions.
-            verbose (bool): If True, prints additional logs.
-            nonlinear_fit_method (str, optional): The fitting method to use. Options are "MLE" or "least_squares". Default is "MLE".
-            xmin_distance (str, optional): The optimal xmin is defined as the value that minimizes the Kolmogorov-Smirnov distance, D,
-            between the empirical data. As D can be insensitive to differences at the tails It may be desirable to use other metrics such as BIC.
         """
 
         # Ensure the DataFrame has exactly is 2D (has two columns)
