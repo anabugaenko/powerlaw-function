@@ -5,7 +5,7 @@ This repo provides functionality for fitting power law functions.  Some example 
 1.  Testing whether data are drawn iid from a power-law distribution.  To do this, we can use, e.g. KDE, to infer the CDF from a finite sample of data, and then we can fit a power-law to the inferred CDF, similarly to [Clauset et al. 2007](https://arxiv.org/abs/0706.1062) and [Virkar and Clauset. 2012](https://arxiv.org/abs/1208.3524).
 2.  Testing whether a stochastic process has long-memory.  To do this we can infer an autocorrelation function from a finite time-series sample, and then we can fit a power-law to the inferred ACF.
 
-The powerlaw-function library provides the core functionality to perform the fitting part of the process in these kinds of use-cases.  It does not provide the functionality for inferring the function from data, or computing confidence intervals, as this will depend on the specific use-case.
+The powerlaw-function library provides the core functionality to perform the fitting part of the process in these kinds of use-cases.  It does not provide the functionality for inferring the function from data, or computing confidence intervals, as the correct way to do this will depend on the specific use-case.
 
 The code is based on the [`powerlaw` package](https://github.com/jeffalstott/powerlaw/tree/master).
 
