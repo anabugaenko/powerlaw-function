@@ -13,7 +13,8 @@ def powerlaw(x: float, C: float, alpha: float) -> float:
     C : float
         Scaling coefficient.
     alpha : float
-        Power-law exponent. Positive values indicate a growth trend, while negative values indicate a decay trend (invers power law relation).
+        Power-law exponent. Positive values indicate a growth trend, while
+        negative values indicate a decay trend (inverse power law relation).
 
     Returns
     -------
@@ -29,8 +30,8 @@ def powerlaw(x: float, C: float, alpha: float) -> float:
 
 def powerlaw_with_cutoff(x: float, alpha: float, lambda_: float, C: float) -> float:
     """
-    Function representing a power law with a cut-off. The sign of 'alpha' determines the trend direction
-    (positive for decay, negative for growth).
+    Function representing a power law with a cut-off. The sign of 'alpha'
+    determines the trend direction (positive for decay, negative for growth).
 
     Parameters:
     x (float): Input value.

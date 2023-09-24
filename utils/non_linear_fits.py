@@ -1,6 +1,5 @@
 import warnings
 import numpy as np
-from scipy import stats
 from scipy.optimize import minimize
 from scipy.optimize import least_squares
 from typing import List, Callable, Union, Tuple
@@ -12,7 +11,7 @@ def mle_fit(
     x_values: List[float], y_values: List[float], function: Callable
 ) -> Union[None, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """
-    Fits a function or curve to the data using the maximum likelihood estimation (MLE) method.
+    Fits a function (or curve) to the data using the maximum likelihood estimation (MLE).
 
     Parameters:
     x_values (List[float]): The independent variable values.

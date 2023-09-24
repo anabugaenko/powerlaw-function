@@ -3,12 +3,15 @@ from scipy import stats
 from typing import List, Tuple
 
 
+from utils.util import block_print, enable_print
+
+
 def loglikelihoods(data: List[float]) -> List[float]:
     """
-    Compute the log likelihood of the data, hence  incorporates the variance of the data and assumes a certain distribution
-    (i.e., normal); -0.5 * np.log(2 * np.pi * np.std(data) ** 2) - (data ** 2) / (2 * np.std(data) ** 2).
+    TODO: Issue #10.
+    Compute the log likelihood of the data, hence  incorporates
+    the variance of the data and assumes a certain distribution
 
-    TODO: Make chosen distribution adaptive/ dynamic as per issue #10 as loc (the mean) greatly impacts fitted results.
     Parameters:
     data (List[float]): The data for which the log likelihood is to be computed.
 
@@ -16,6 +19,7 @@ def loglikelihoods(data: List[float]) -> List[float]:
     float: The log likelihoods of the data.
 
     """
+
     # Compute the standard deviation of the data as an initial parameter
     data_std = np.std(data)
 
@@ -31,8 +35,8 @@ def compute_bic_from_loglikelihood(log_likelihood: float, num_params: int, num_s
 
         BIC = log(n) * k - 2 * log(L)
 
-    where n is the number of samples, k is the number of parameters, and L is the maximum likelihood that incorporates
-    the variance of the data and assumes a certain distribution (usually normal).
+    where n is the number of samples, k is the number of parameters, and L is the maximum likelihood
+    that incorporates the variance of the data and assumes a certain distribution (usually normal).
 
     Parameters:
     - log_likelihood (float): The log-likelihood of the model.
@@ -41,13 +45,12 @@ def compute_bic_from_loglikelihood(log_likelihood: float, num_params: int, num_s
 
     Returns:
     - float: The BIC for the model.
-
-
     """
-    # Compute the BIC
-    bic = np.log(num_samples) * num_params - 2 * log_likelihood
 
-    return bic
+    # Compute the BIC
+    BIC = np.log(num_samples) * num_params - 2 * log_likelihood
+
+    return BIC
 
 
 def compute_bic_from_residuals(residuals: np.ndarray, num_parameters: int) -> float:
@@ -56,8 +59,9 @@ def compute_bic_from_residuals(residuals: np.ndarray, num_parameters: int) -> fl
 
         BIC = n * log(RSS/n) + k * log(n)
 
-    where n is the number of samples, k is the number of parameters and RSS is the residual sum of squares. In this way,
-    it uses the residuals directly without making any assumptions about the distribution of the data (or residuals).
+    where n is the number of samples, k is the number of parameters and RSS is the residual sum of squares.
+    In this way, it uses the residuals directly without making any assumptions about the
+    distribution of the data (or residuals).
 
 
     Parameters:
@@ -68,10 +72,41 @@ def compute_bic_from_residuals(residuals: np.ndarray, num_parameters: int) -> fl
     float: The computed BIC value.
 
     """
+
     n = len(residuals)
     RSS = np.sum(residuals**2)
     BIC = n * np.log(RSS / n) + num_parameters * np.log(n)
     return BIC
+
+
+def compute_rsquared(residuals: np.ndarray, y_values: np.ndarray, params: List[float]) -> Tuple[float, float]:
+    """
+    Compute the R-squared and adjusted R-squared values.
+
+    Parameters:
+    - residuals (np.ndarray): The residuals of the model.
+    - y_values (np.ndarray): The actual observed values.
+    - params (List[float]): The parameters of the model.
+
+    Returns:
+    - float: The R-squared value.
+    - float: The adjusted R-squared value.
+    """
+
+    ssr = np.sum(residuals**2)
+    sst = np.sum((y_values - np.mean(y_values)) ** 2)
+
+    if sst == 0:
+        raise ValueError("SST (total sum of squares) is zero, can't compute R-squared.")
+
+    rsquared = 1 - ssr / sst
+
+    # Compute the Adjusted R-squared value
+    n = len(y_values)
+    p = len(params)
+    adjusted_rsquared = 1 - (1 - rsquared) * (n - 1) / (n - p - 1)
+
+    return rsquared, adjusted_rsquared
 
 
 def get_goodness_of_fit(
@@ -80,76 +115,77 @@ def get_goodness_of_fit(
     params: List[float],
     model_predictions: List[float],
     bic_method="residuals",
-) -> Tuple[float, float, float]:
+    verbose=False,
+) -> Tuple[float, float, float, float]:
     """
     Compute the goodness of fit of a model.
 
     Parameters:
-    residuals (List[float]): The residuals of the model.
-    y_values (List[float]): The actual observed values.
-    params (List[float]): The parameters of the model.
-    model_predictions (List[float]): The predicted values by the model.
-    bic_method (str): The method to use for BIC computation ('log_likelihood' or 'residuals'). Default is 'residuals'.
+    - residuals (List[float]): The residuals of the model.
+    - y_values (List[float]): The actual observed values.
+    - params (List[float]): The parameters of the model.
+    - model_predictions (List[float]): The predicted values by the model.
+    - bic_method (str): The method to use for BIC computation ('log_likelihood' or 'residuals'). Default is 'residuals'.
 
     Returns:
-    float: The Kolmogorov-Smirnov statistic D.
-    float: The BIC.
-    float: The adjusted R-squared value.
-
+    - float: The Kolmogorov-Smirnov statistic, D.
+    - float: The BIC.
+    - float: MAPE metric.
+    - float: The adjusted R-squared value.
     """
-    # Compute the R-squared value
-    ssr = np.sum(residuals**2)
-    sst = np.sum((y_values - np.mean(y_values)) ** 2)
-    rsquared = 1 - ssr / sst
+    original_stdout = block_print() if not verbose else None
+    try:
+        # Compute the R-squared value
+        rsquared, adjusted_rsquared = compute_rsquared(residuals, y_values, params)
 
-    # Compute the Adjusted R-squared value
-    n = len(y_values)
-    p = len(params)
-    adjusted_rsquared = 1 - (1 - rsquared) * (n - 1) / (n - p - 1)
+        # MAPE metric is an error metric that is less sensitive to outliers than root Mean Squared Error (MAE).
+        # from sklearn.metrics import mean_absolute_error
+        # mae = mean_absolute_error(y_true, y_pred)
+        mape = np.mean(np.abs((y_values - model_predictions) / y_values)) * 100
 
-    # MAPE metric is an error metric that is less sensitive to outliers than root Mean Squared Error (MAE).
-    # from sklearn.metrics import mean_absolute_error
-    # mae = mean_absolute_error(y_true, y_pred)
-    mape = np.mean(np.abs((y_values - model_predictions) / y_values)) * 100
+        # Compute the KS statistic and p-value
+        result = stats.ks_2samp(y_values, model_predictions, alternative="two-sided")
+        ks_statistic = result.statistic
 
-    # Compute the KS statistic and p-value
-    result = stats.ks_2samp(y_values, model_predictions, alternative="two-sided")
-    ks_statistic = result.statistic
+        # Compute BIC
+        n = len(y_values)
+        p = len(params)
+        if bic_method == "log_likelihood":
+            log_likelihoods = loglikelihoods(residuals)
+            loglikelihood = np.sum(log_likelihoods)  # sum over all data points
+            bic = compute_bic_from_loglikelihood(loglikelihood, len(params), n)
+        else:
+            bic = compute_bic_from_residuals(residuals, p)
 
-    # Compute BIC
-    if bic_method == "log_likelihood":
-        log_likelihoods = loglikelihoods(residuals)
-        loglikelihood = np.sum(log_likelihoods)  # sum over all data points
-        bic = compute_bic_from_loglikelihood(loglikelihood, len(params), n)
-    else:
-        bic = compute_bic_from_residuals(residuals, p)
+    except Exception as e:
+        enable_print(original_stdout)
+        print(e)
+    finally:
+        enable_print(original_stdout)
 
     return ks_statistic, bic, mape, adjusted_rsquared
 
 
 def get_residual_loglikelihoods(
-    first_residuals: List[float], second_residuals: List[float]
+    first_residuals: np.ndarray, second_residuals: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Compute the log-likelihood of two sets of residuals.
+    Compute the log-likelihood of two sets of residuals. If the two sets
+    have different lengths, they are trimmed to the length of the shorter set.
 
     Parameters:
-    first_residuals (List[float]): The first set of residuals.
-    second_residuals (List[float]): The second set of residuals.
+    first_residuals (np.ndarray): The first set of residuals.
+    second_residuals (np.ndarray): The second set of residuals.
 
     Returns:
-    np.ndarray: The log-likelihoods of the first set of residuals.
-    np.ndarray: The log-likelihoods of the second set of residuals.
-
+    Tuple[np.ndarray, np.ndarray]: The log-likelihoods of the first and second set of residuals.
     """
-    x_values = np.arange(1, len(first_residuals) + 1)
 
     # Trim the residuals to the same length
     if len(first_residuals) != len(second_residuals):
         min_len = min(len(first_residuals), len(second_residuals))
         first_residuals = first_residuals[-min_len:]
         second_residuals = second_residuals[-min_len:]
-        x_values = x_values[-min_len:]
 
     # Compute the log-likelihoods
     loglikelihoods1 = loglikelihoods(first_residuals)

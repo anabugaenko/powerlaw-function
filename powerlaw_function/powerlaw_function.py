@@ -31,7 +31,7 @@ class FitResult:
         params (FunctionParams): Parameters of the function.
         D (float): KS-distance value.
         bic (float): Bayesian Information Criterion for the model.
-        mape (float): MAPE metric is an error metric that is less sensitive to outliers than root Mean Squared Error (MAE)
+        mape (float): MAPE metric is an error metric.
         adjusted_rsquared (float): Adjusted R squared value.
     """
 
@@ -160,7 +160,7 @@ class Fit:
 
         # Ensure the DataFrame has exactly is 2D (has two columns)
         if len(data.columns) != 2:
-            raise ValueError("Input data must have exactly two columns", file=sys.stderr)
+            raise ValueError("Input data must have exactly two columns")
 
         self.x_values = asarray(data.iloc[:, 0], dtype="float")
         self.y_values = asarray(data.iloc[:, 1], dtype="float")
@@ -210,9 +210,7 @@ class Fit:
         # Check if there are enough data points for the intended fits
         min_data_points = 20
         if len(self.x_values) < min_data_points or len(self.y_values) < min_data_points:
-            raise ValueError(
-                f"Insufficient data for fitting. At least {min_data_points} data points are required", file=sys.stderr
-            )
+            raise ValueError(f"Insufficient data for fitting. At least {min_data_points} data points are required")
 
         # Check if fitting method supported
         if nonlinear_fit_method:
@@ -255,7 +253,7 @@ class Fit:
         original_stdout = block_print() if not self.verbose else None
 
         try:
-            print(f"Fitting powerlaw function using Nonlinear fitting method.")
+            print(f"Using Nonlinear fitting methods to directly fit powerlaw function.")
             function, function_name = sf.powerlaw, sf.powerlaw.__name__
             xmin_index = (
                 np.where(self.x_values == self.xmin)[0][0]
@@ -297,7 +295,7 @@ class Fit:
 
     def _process_nonlinear_method(self, function: Callable, function_name: str, xmin_index: float) -> FitResult:
         """
-        Directly fit the data with a given power-law function and returns the results.
+        Directly fits the data with a given power-law function and returns the results.
 
         Args:
             function (Callable): Function to fit.
@@ -385,7 +383,7 @@ class Fit:
 
     def fit_powerlaw_function(self, functions: dict, xmin=None, verbose=False):
         """
-        Fits the data using power-law functions.
+        Fits the data using custom power-law functions.
 
         Args:
             functions (dict): Dictionary of functions to fit.
@@ -410,7 +408,7 @@ class Fit:
                 xmin = None
 
             for function_name, function in functions.items():
-                print(f"Using Nonlinear Least-squares fitting method to directly fit {function_name}.")
+                print(f"Using Nonlinear fitting method to directly fit {function_name}.")
                 xmin_index = np.where(self.x_values == xmin)[0][0] if xmin is not None else powerlaw_result.xmin_index
                 result = self._process_nonlinear_method(function, function_name, xmin_index)
                 self.fit_results_dict[function_name] = result
@@ -607,10 +605,10 @@ if __name__ == "__main__":
     fit = Fit(xy_df, verbose=True, xmin_distance="BIC")
 
     # Direct comparison against alternative models
-    print("Power law vs. powerlaw_with_cutoff")
-    R, p = fit.function_compare("powerlaw", "powerlaw_with_cutoff")
+    print("Power law vs. exponential_function")
+    R, p = fit.function_compare("powerlaw", "exponential_function")
 
-    fit.powerlaw_with_cutoff.print_fitted_results()
+    fit.exponential_function.print_fitted_results()
     print(f"Normalized Likelihood Ratio: {R}, p.value: {p}")
     print("\n")
 
@@ -653,5 +651,5 @@ if __name__ == "__main__":
     # Plot
     fit.plot_data(scaling_range=True, scale="linear")
     fit.powerlaw.plot_fit()
-    fit.powerlaw_with_cutoff.plot_fit()
+    fit.exponential_function.plot_fit()
     fit.linear_function.plot_fit()
