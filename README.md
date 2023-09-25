@@ -1,4 +1,4 @@
-# powerlaw-function: A Python Package for Analysing Heavy-Tailed Functions
+# powerlaw-function: A Python Package for Analysing Heavy-Tailed Data
 
 This repo provides functionality for fitting power law functions.  Some example use-cases are:
 
