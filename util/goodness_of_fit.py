@@ -3,7 +3,7 @@ from scipy import stats
 from typing import List, Tuple
 
 
-from utils.util import block_print, enable_print
+from util.utils import block_print, enable_print
 
 
 def loglikelihoods(data: List[float]) -> List[float]:
@@ -134,6 +134,11 @@ def get_goodness_of_fit(
     - float: The adjusted R-squared value.
     """
     original_stdout = block_print() if not verbose else None
+    ks_statistic = None
+    bic = None
+    mape = None
+    adjusted_rsquared = None
+
     try:
         # Compute the R-squared value
         rsquared, adjusted_rsquared = compute_rsquared(residuals, y_values, params)
@@ -162,6 +167,7 @@ def get_goodness_of_fit(
         print(e)
     finally:
         enable_print(original_stdout)
+
 
     return ks_statistic, bic, mape, adjusted_rsquared
 

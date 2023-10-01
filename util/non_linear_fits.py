@@ -4,7 +4,7 @@ from scipy.optimize import minimize
 from scipy.optimize import least_squares
 from typing import List, Callable, Union, Tuple
 
-from utils.goodness_of_fit import loglikelihoods
+from util.goodness_of_fit import loglikelihoods
 
 
 def mle_fit(

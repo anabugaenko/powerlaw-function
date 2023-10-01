@@ -62,7 +62,8 @@ def powerlaw_with_exp_svf(x: float, alpha: float, beta: float, lambda_: float) -
     x : float
         Input value.
     alpha : float
-        Power-law exponent. Positive values indicate a growth trend, while negative values represent an inverse power law relation.
+        Power-law exponent. Positive values indicate a growth trend, while negative values represent an inverse power
+        law relation.
     beta : float
         Coefficient for the exponential function, influencing the strength of the exponential variation.
     lambda_ : float

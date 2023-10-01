@@ -1,6 +1,6 @@
-from utils.linear_fits import linear_fit
-from utils import supported_functions as sf
-from utils.non_linear_fits import mle_fit, least_squares_fit
+from util.linear_fits import linear_fit
+from util import supported_functions as sf
+from util.non_linear_fits import mle_fit, least_squares_fit
 from scipy.stats import laplace, norm, t, expon, lognorm, powerlaw, gumbel_l, gumbel_r
 
 LINEAR_FITTING_METHODS = {

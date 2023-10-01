@@ -6,14 +6,13 @@ from typing import Callable
 from matplotlib import pyplot as plt
 from numpy import asarray, isinf, isnan
 
-from utils.xmin import find_xmin
-from utils import supported_functions as sf
-from utils.util import block_print, enable_print
-from utils.supported_functions import FunctionParams
-from utils.non_linear_fits import least_squares_fit, mle_fit
-from utils.constants import LINEAR_FITTING_METHODS, NONLINEAR_FITTING_METHODS, SUPPORTED_FUNCTIONS
-from utils.goodness_of_fit import get_goodness_of_fit, get_residual_loglikelihoods, loglikelihood_ratio
-
+from util.xmin import find_xmin
+from util import supported_functions as sf
+from util.utils import block_print, enable_print
+from util.supported_functions import FunctionParams
+from util.non_linear_fits import least_squares_fit, mle_fit
+from util.constants import LINEAR_FITTING_METHODS, NONLINEAR_FITTING_METHODS, SUPPORTED_FUNCTIONS
+from util.goodness_of_fit import get_goodness_of_fit, get_residual_loglikelihoods, loglikelihood_ratio
 
 class FitResult:
     """
@@ -55,6 +54,9 @@ class FitResult:
             model_predictions=self.model_predictions,
         )
 
+        # Plotting
+        self._is_subplot_populated = False
+
     def to_dictionary(self):
         """
         Converts the object attributes to a dictionary.
@@ -77,7 +79,7 @@ class FitResult:
             "adjusted_rsquared": self.adjusted_rsquared,
         }
 
-    def print_fitted_results(self):
+    def fit_results(self):
         print("")
         print(f"For {self.function_name} fitted using {self.fitting_method}:")
         print("")
@@ -98,7 +100,8 @@ class FitResult:
         print("Adjusted R-squared =", self.adjusted_rsquared)
         print("\n")
 
-    def _plot_data(self, scale="loglog", data_kwargs=None, fit_kwargs=None, figure_kwargs=None):
+
+    def _plot_data(self, scale="loglog", data_kwargs=None, fit_kwargs=None, figure_kwargs=None, auto_show=True):
         """
         Plots the fitted data along with the raw data.
 
@@ -108,37 +111,46 @@ class FitResult:
             figure_kwargs (dict): Arguments for the figure.
             scale (str): Scale for the plot. Can be 'loglog' or 'linear'.
         """
+        ax_provided = 'ax' in fit_kwargs if fit_kwargs else False
 
-        func_name = self.function_name
+        # Check if the axis was provided in fit_kwargs and update _is_subplot_populated accordingly
+        if ax_provided:
+            self._is_subplot_populated = True
 
-        plt.figure(**(figure_kwargs if figure_kwargs else {}))
+        # Default settings
+        default_data_kwargs = {"label": "Raw data"}
+        default_fit_kwargs = {"label": f"Fitted function: {self.function_name}", "linestyle": "-"}
+        default_figure_kwargs = {}
 
-        # Plot raw data according to the specified scale
+        # Extend or override defaults with provided kwargs
+        data_kwargs = {**default_data_kwargs, **(data_kwargs if data_kwargs else {})}
+        fit_kwargs = {**default_fit_kwargs, **(fit_kwargs if fit_kwargs else {})}
+        figure_kwargs = {**default_figure_kwargs, **(figure_kwargs if figure_kwargs else {})}
+
+        ax = fit_kwargs.pop("ax", None)
+        if ax is None:
+            plt.figure(**figure_kwargs)
+            ax = plt.gca()
+
         plot_func = plt.loglog if scale == "loglog" else plt.plot if scale == "linear" else None
         if plot_func is None:
             raise ValueError(f"Invalid scale value: {scale}. Must be either 'loglog' or 'linear'.")
+        plot_func = getattr(ax, plot_func.__name__)
 
-        # Plots raw data
-        plot_func(
-            self.data.xmin_x_values, self.data.xmin_y_values, label="Raw data", **(data_kwargs if data_kwargs else {})
-        )
+        plot_func(self.data.xmin_x_values, self.data.xmin_y_values, **data_kwargs)
+        plot_func(self.data.xmin_x_values, self.function(self.data.xmin_x_values, *(self.params.get_values())),
+                  **fit_kwargs)
 
-        # Plots fitted function on top of raw data
-        plot_func(
-            self.data.xmin_x_values,
-            self.function(self.data.xmin_x_values, *(self.params.get_values())),
-            label=f"Fitted function: {func_name}",
-            **(fit_kwargs if fit_kwargs else {}),
-        )
+        ax.legend()
+        ax.grid(False)
 
-        # update legend with fit_kwargs if provided
-        plt.legend(**(fit_kwargs if fit_kwargs else {"frameon": False}))
+        if auto_show:
+            if not self._is_subplot_populated:
+                plt.show()
+                self._is_subplot_populated = False  # Reset after showing the plot
 
-        plt.grid(False)
-        plt.show()
-
-    def plot_fit(self, data_kwargs=None, fit_kwargs=None, figure_kwargs=None, scale="loglog"):
-        self._plot_data(data_kwargs=data_kwargs, fit_kwargs=fit_kwargs, figure_kwargs=figure_kwargs, scale=scale)
+    def plot_fit(self, data_kwargs=None, fit_kwargs=None, figure_kwargs=None, scale="loglog", auto_show=True):
+        self._plot_data(data_kwargs=data_kwargs, fit_kwargs=fit_kwargs, figure_kwargs=figure_kwargs, scale=scale, auto_show=auto_show)
 
 
 class Fit:
@@ -325,7 +337,7 @@ class Fit:
             data=pd.DataFrame({"xmin_x_values": xmin_x_values, "xmin_y_values": xmin_y_values}),
         )
 
-        result.print_fitted_results()
+        result.fit_results()
 
         return result
 
@@ -373,7 +385,7 @@ class Fit:
             data=pd.DataFrame({"xmin_x_values": xmin_x_values, "xmin_y_values": xmin_y_values}),
         )
 
-        result.print_fitted_results()
+        result.fit_results()
 
         return result
 
@@ -511,20 +523,19 @@ class Fit:
 
         return pd.DataFrame(results_list)
 
-    def plot_data(self, scale="loglog", scaling_range=False, kwargs=None):
+    def plot_data(self, scale="loglog", scaling_range=False, data_kwargs=None, figure_kwargs=None):
         """
         Plots the data stored in the object based on the provided scale.
 
-        The data can be plotted on either a log-log scale or a linear scale.
-
         Args:
             scale (str, optional):
-                The type of scale on which to plot the data.Can be either 'loglog' or 'linear'. Defaults to 'loglog'.
-            scaling_range(bool, optional):
-                Whether to plot the data from lower-bound scaling region xmin. Defaults to False, displaying entire
-                raw data.
-            kwargs (dict, optional):
-                Additional keyword arguments to pass to the plotting function.
+                The type of scale on which to plot the data. Can be either 'loglog' or 'linear'. Defaults to 'loglog'.
+            scaling_range (bool, optional):
+                Whether to plot the data from the lower-bound scaling region xmin. Defaults to False, displaying entire raw data.
+            data_kwargs (dict, optional):
+                Additional keyword arguments to pass to the plotting function for the data.
+            figure_kwargs (dict, optional):
+                Additional keyword arguments to pass to the plt.figure() function.
 
         Raises:
             ValueError: If the provided scale is neither 'loglog' nor 'linear'.
@@ -532,6 +543,7 @@ class Fit:
         Returns:
             None: This method directly plots the data using matplotlib and doesn't return any value.
         """
+
         function = sf.powerlaw
         xmin_index = (
             np.where(self.x_values == self.xmin)[0][0]
@@ -545,28 +557,31 @@ class Fit:
             )
         )
 
-        # Option to plot entire data or from lower bound scaling region to the power-law behavior xmin.
-        if scaling_range:
-            x_values = self.x_values[xmin_index:]
-            y_values = self.y_values[xmin_index:]
-        else:
-            x_values = self.x_values
-            y_values = self.y_values
+        # Determine if provided axis or use default
+        axis_provided_in_kwargs = 'ax' in data_kwargs if data_kwargs else False
+
+        ax = data_kwargs.pop("ax", None) if data_kwargs else None
+        if ax is None:
+            plt.figure(**(figure_kwargs if figure_kwargs else {}))
+            ax = plt.gca()
 
         # Plot raw data according to the specified scale
         plot_func = plt.loglog if scale == "loglog" else plt.plot if scale == "linear" else None
         if plot_func is None:
             raise ValueError(f"Invalid scale value: {scale}. Must be either 'loglog' or 'linear'.")
+        plot_func = getattr(ax, plot_func.__name__)  # Use the same plotting function but on the specific axis
 
-        # Plot raw data
+        # Option to plot entire data or from the lower-bound scaling region to the power-law behavior xmin.
         if scaling_range:
-            plot_func(x_values, y_values, label="xmin data", **(kwargs if kwargs else {}))
+            plot_func(self.x_values[xmin_index:], self.y_values[xmin_index:], label="xmin data",
+                      **(data_kwargs if data_kwargs else {}))
         else:
-            plot_func(x_values, y_values, label="Raw data", **(kwargs if kwargs else {}))
+            plot_func(self.x_values, self.y_values, label="Raw data", **(data_kwargs if data_kwargs else {}))
 
-        plt.grid(False)
-        plt.legend(frameon=False)
-        plt.show()
+        ax.grid(False)
+        ax.legend(frameon=False)
+        if not axis_provided_in_kwargs:
+            plt.show()
 
 
 if __name__ == "__main__":
@@ -577,23 +592,11 @@ if __name__ == "__main__":
     csv_path = os.path.join(current_dir, "..", "datasets", "stock_tsla.csv")
     sample = pd.read_csv(csv_path, header=0, index_col=0)
 
-    # Generate series from a function, in this example, we compute the autocorrelation function (ACF) from raw data
-    from typing import List
-
-    def acf(series: pd.Series, lags: int) -> List:
-        """
-        Returns a list of autocorrelation values for each of the lags from 0 to `lags`
-        """
-        acl_ = []
-        for i in range(lags):
-            ac = series.autocorr(lag=i)
-            acl_.append(ac)
-        return acl_
-
     # Autocorrection function (ACF) of sample data
+    from hurst_exponent.acf import linear_acf
     ACF_RANGE = 1001
     x = list(range(1, ACF_RANGE))
-    acf_series = acf(sample["trade_sign"], ACF_RANGE)[1:]
+    acf_series = linear_acf(sample["trade_sign"], ACF_RANGE)[1:]
 
     xy_df = pd.DataFrame({"x_values": x, "y_values": acf_series})
 
@@ -601,10 +604,10 @@ if __name__ == "__main__":
     fit = Fit(xy_df, verbose=True, xmin_distance="BIC")
 
     # Direct comparison against alternative models
-    print("Power law vs. exponential_function")
-    R, p = fit.function_compare("powerlaw", "exponential_function")
+    print("Power law vs. powerlaw_with_exp_svf")
+    R, p = fit.function_compare("powerlaw", "powerlaw_with_exp_svf")
 
-    fit.exponential_function.print_fitted_results()
+    fit.powerlaw_with_exp_svf.fit_results()
     print(f"Normalized Likelihood Ratio: {R}, p.value: {p}")
     print("\n")
 
@@ -633,11 +636,11 @@ if __name__ == "__main__":
 
         return a * x + b
 
-    custom_powerlaw_funcs = {"linear_function": linear_function}
+    custom_function = {"linear_function": linear_function}
 
     # Fit custom function
-    fit.fit_powerlaw_function(custom_powerlaw_funcs)
-    fit.linear_function.print_fitted_results()
+    fit.fit_powerlaw_function(custom_function)
+    fit.linear_function.fit_results()
 
     # Direct comparison against alternative models
     print("powerlaw vs. linear_function:")
@@ -647,5 +650,5 @@ if __name__ == "__main__":
     # Plot
     fit.plot_data(scaling_range=True, scale="linear")
     fit.powerlaw.plot_fit()
-    fit.exponential_function.plot_fit()
+    fit.powerlaw_with_exp_svf.plot_fit()
     fit.linear_function.plot_fit()
