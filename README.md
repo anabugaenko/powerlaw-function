@@ -15,7 +15,7 @@ We recommend Conda for managing Python packages; pip for everything else. To get
 
 # Further Development
 
-`powerlaw-function is open for further development by the community.  Feel free to raise an issue if you find a problem. If there are additional features you'd like to see developed, please [raise an issue](https://github.com/anabugaenko/powerlaw-function/issues) and/or pull request; this repository is actively being developed and any tickets will be addressed in order of importance. 
+`powerlaw-function is open for further development by the community. If there are additional features you'd like to see developed, feel free to raise an issue and/or pull request.
 
 # Acknowledgement 
 
