@@ -1,15 +1,15 @@
 # powerlaw-function: A Python Package for Analysing Heavy-Tailed Data
 
-This repo provides functionality for fitting power law functions to random variables. Some example use-cases are:
+This Package provides functionality for fitting power law functions to random variables. 
 
-1.  Testing whether data are drawn iid from a power-law distribution.  To do this, we can use, e.g. KDE, to infer the CDF from a finite sample of data, and then we can fit a power-law to the inferred CDF, similarly to [Clauset et al. 2007](https://arxiv.org/abs/0706.1062) and [Virkar and Clauset. 2012](https://arxiv.org/abs/1208.3524).
-2.  Testing whether a stochastic process follows a power law. For instance, we can infer an autocorrelation function from a finite time-series sample, and then we can fit a power-law to the inferred ACF to infer whether the process has long memory. 
+In (https://arxiv.org/abs/0706.1062) and [Virkar and Clauset. 2012](https://arxiv.org/abs/1208.3524), they provide methods appropriate for testing whether data are drawn iid from a power-law distribution. To do this, they use KDE to infer the CDF from a finite sample of data, and then we can fit a power-law to the inferred CDF, known as distribution fitting, where they model the probability distribution of a single variable (see - https://www.mathworks.com/help/stats/curve-fitting-and-distribution-fitting.html).
 
-`powerlaw-function` provides the core functionality to perform the fitting part of the process in these kinds of use-cases.  It does not provide the functionality for computing confidence intervals, as the correct way to do this will depend on the specific use-case.
+In our case, we are interested in modelling a response variable as a function of a predictor variable and providing methods for testing whether such a stochastic process follows a power law. For instance, we can infer an autocorrelation function from a finite time-series sample, and then we can fit a power-law to the inferred ACF to infer whether the process has long memory. Our package provides core functionality to perform the fitting and assess the goodness of fit is such cases. It does not provide the functionality for computing confidence intervals, as the correct way to do this will depend on the specific use case.
+
 
 # Installation 
 
-We recommend Conda for managing Python packages; pip for everything else. To get started, simply install `pip` and run:
+We recommend Conda for managing Python packages; pip for everything else. To get started, install `pip` and run:
 
   `pip install powerlaw_function`
 
@@ -19,7 +19,7 @@ We recommend Conda for managing Python packages; pip for everything else. To get
 
 # Acknowledgement 
 
-We would like to extend a thank you to Jeff Alstott, Ed Bullmore, Dietmar Plenz for open-sourcing the 'powerlaw' Package, their implementations provided a crucial starting point for the development `powerlaw-function`. We would also like to Andreas Klaus, Aaron Clauset, Cosma Shalizi, and Adam Ginsburg for their original paper [POWER-LAW DISTRIBUTIONS IN EMPIRICAL DATA](https://arxiv.org/abs/0706.1062)  which serves as a theoretical basis for our approach.
+We want to extend a thank you to Jeff Alstott, Ed Bullmore, Dietmar Plenz for open-sourcing the 'powerlaw' Package which can be used to model the PDF of a single variable. Their implementations provided a crucial starting point for the development `powerlaw-function`. We would also like to Andreas Klaus, Aaron Clauset, Cosma Shalizi, and Adam Ginsburg for their original paper [POWER-LAW DISTRIBUTIONS IN EMPIRICAL DATA](https://arxiv.org/abs/0706.1062)  which serves as a theoretical basis for both approaches.
 
 # How to Cite
 
