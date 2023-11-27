@@ -19,7 +19,7 @@ We recommend Conda for managing Python packages; pip for everything else. To get
 
 # Acknowledgement 
 
-We want to extend a thank you to Jeff Alstott, Ed Bullmore, Dietmar Plenz for open-sourcing the 'powerlaw' Package which can be used to model the PDF of a single variable. Their implementations provided a crucial starting point for the development `powerlaw-function`. We would also like to Andreas Klaus, Aaron Clauset, Cosma Shalizi, and Adam Ginsburg for their original paper [POWER-LAW DISTRIBUTIONS IN EMPIRICAL DATA](https://arxiv.org/abs/0706.1062)  which serves as a theoretical basis for both approaches.
+We want to extend a thank you to Jeff Alstott, Ed Bullmore, Dietmar Plenz for open-sourcing the 'powerlaw' Package which can be used to model the PDF of a single variable. Their implementations provided a crucial starting point for the development `powerlaw-function`. We would also like to Andreas Klaus, Aaron Clauset, Cosma Shalizi, and Adam Ginsburg for their original paper which serves as a theoretical basis for both approaches.
 
 # How to Cite
 
